@@ -1,0 +1,19 @@
+{
+  "name": "sketching",
+  "version": "1.0.0",
+  "description": "Real-time pencil sketching",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "regl": "^2.1.0",
+    "resl": "^1.0.3",
+    "three": "^0.127.0"
+  },
+  "devDependencies": {
+    "vite": "^2.1.5"
+  }
+}
