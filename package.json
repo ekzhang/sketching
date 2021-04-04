@@ -9,9 +9,11 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "angle-normals": "^1.0.0",
+    "bunny": "^1.0.1",
+    "gl-mat4": "^1.2.0",
     "regl": "^2.1.0",
-    "resl": "^1.0.3",
-    "three": "^0.127.0"
+    "resl": "^1.0.3"
   },
   "devDependencies": {
     "vite": "^2.1.5"

@@ -1,23 +1,33 @@
-varying vec2 vUv;
+precision mediump float;
 
-attribute vec2 texCoordA;
-attribute vec2 texCoordB;
-attribute vec2 texCoordC;
+uniform mat4 view, projection;
+
+attribute vec3 position, normal;
+// attribute uint indexInTriangle; // 0=A, 1=B, 2=C
+// attribute vec2 texCoordA;
+// attribute vec2 texCoordB;
+// attribute vec2 texCoordC;
 
 varying vec2 vTexCoordA;
 varying vec2 vTexCoordB;
 varying vec2 vTexCoordC;
-
-attribute uint indexInTriangle; // 0=A, 1=B, 2=C
-
 varying vec2 brightnessA; // a vector {brightness, 1}
 varying vec2 brightnessB; // a vector {brightness, 1}
 varying vec2 brightnessC; // a vector {brightness, 1}
 
 void main() {
-	vUv = uv;
-  	vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
-	brightnessA.x = min(pow(max(0.5 * modelViewPosition.y + 0.5, 0.0), 1.4), 1.0);
+  	vec4 modelViewPosition = view * vec4(position, 1.0);
+
+    // Gouraud shading at each vertex, using Lambertian BRDF
+    vec3 light = vec3(0.0, 10.0, 10.0);
+    vec3 light2 = vec3(10.0, 10.0, -10.0);
+    vec3 light3 = vec3(-5.0, 2.0, 0.0);
+    float diffuse = 0.0;
+    diffuse += max(dot(normalize(light - position), normal), 0.0);
+    diffuse += 0.8 * max(dot(normalize(light2 - position), normal), 0.0);
+    diffuse += 0.5 * max(dot(normalize(light3 - position), normal), 0.0);
+
+	brightnessA.x = diffuse;
 	brightnessA.y = 1.0;
-  	gl_Position = projectionMatrix * modelViewPosition;
+  	gl_Position = projection * modelViewPosition;
 }
