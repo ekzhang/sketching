@@ -59,7 +59,7 @@ def compute_curvature_directions(mesh):
             else:
                 curvature_max[i,:] = eigvecs[:,j]
         assert cnt == 1, "Eigenvector equal to normal not found"
-    
+
     return curvature_min, curvature_max
 
 def get_lineset(vertices, vectors, color, l=0.01):
@@ -81,7 +81,7 @@ def visualize_curvature_directions(mesh, l=0.01, show_normals=False):
     normals = np.array(mesh.vertex_normals)
     n = vertices.shape[0]
     curvature_min, curvature_max = compute_curvature_directions(mesh)
-    
+
     line_set_max = get_lineset(vertices, curvature_max, [1, 0, 0])
     line_set_min = get_lineset(vertices, curvature_min, [0, 1, 0])
     line_set_normal = get_lineset(vertices, normals, [0, 0, 1])

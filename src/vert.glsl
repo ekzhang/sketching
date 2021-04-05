@@ -3,10 +3,10 @@ precision mediump float;
 uniform mat4 view, projection;
 
 attribute vec3 position, normal;
-// attribute uint indexInTriangle; // 0=A, 1=B, 2=C
-// attribute vec2 texCoordA;
-// attribute vec2 texCoordB;
-// attribute vec2 texCoordC;
+attribute float indexInTriangle; // 0=A, 1=B, 2=C
+attribute vec2 texCoordA;
+attribute vec2 texCoordB;
+attribute vec2 texCoordC;
 
 varying vec2 vTexCoordA;
 varying vec2 vTexCoordB;
@@ -27,7 +27,11 @@ void main() {
     diffuse += 0.8 * max(dot(normalize(light2 - position), normal), 0.0);
     diffuse += 0.5 * max(dot(normalize(light3 - position), normal), 0.0);
 
-	brightnessA.x = diffuse;
-	brightnessA.y = 1.0;
+    vTexCoordA = texCoordA;
+    vTexCoordB = texCoordB;
+    vTexCoordC = texCoordC;
+    brightnessA = (1.0 - step(0.5, abs(indexInTriangle - 0.0))) * vec2(diffuse, 1.0);
+    brightnessB = (1.0 - step(0.5, abs(indexInTriangle - 1.0))) * vec2(diffuse, 1.0);
+    brightnessC = (1.0 - step(0.5, abs(indexInTriangle - 2.0))) * vec2(diffuse, 1.0);
   	gl_Position = projection * modelViewPosition;
 }
