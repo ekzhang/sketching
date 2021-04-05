@@ -13,7 +13,7 @@ import texture4 from "../textures/texture4.png";
 import bunny from "../models/bunny_1k.json";
 import { loadMesh } from "./geometry";
 
-const pane = new Tweakpane();
+const pane = new Tweakpane({ title: "Parameters" });
 const params = {
   scale: 4,
   zoom: 0.5,
@@ -26,7 +26,7 @@ pane.addInput(params, "zoom", { min: -5, max: 5 });
 pane.addInput(params, "height", { min: -1, max: 1 });
 pane.addSeparator();
 pane.addInput(params, "rotate");
-pane.addInput(params, "angle", { min: -Math.PI, max: Math.PI });
+pane.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
 const regl = Regl();
 
@@ -38,8 +38,12 @@ const draw = regl({
   attributes,
   elements,
   uniforms: {
-    view: ({ tick }) => {
-      const t = params.rotate ? 0.01 * tick : params.angle;
+    view: () => {
+      if (params.rotate) {
+        params.angle = (params.angle + 0.01) % (2 * Math.PI);
+        pane.refresh();
+      }
+      const t = params.angle;
       const radius = Math.pow(2, -params.zoom);
       const height = params.height;
       return mat4.lookAt(
