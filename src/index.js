@@ -1,6 +1,7 @@
 import Regl from "regl";
 import resl from "resl";
 import { mat4 } from "gl-matrix";
+import Tweakpane from "tweakpane";
 
 import fragmentShader from "./frag.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
@@ -11,6 +12,12 @@ import texture3 from "../textures/texture3.png";
 import texture4 from "../textures/texture4.png";
 import bunny from "../models/bunny_1k.json";
 import { loadMesh } from "./geometry";
+
+const pane = new Tweakpane();
+const params = {
+  scale: 10,
+};
+pane.addInput(params, "scale", { min: 1, max: 100, step: 0.1 });
 
 const regl = Regl();
 
@@ -44,7 +51,7 @@ const draw = regl({
       c.drawingBufferHeight,
       Math.min(c.drawingBufferWidth, c.drawingBufferHeight),
     ],
-    scale: 10, // How large the textures are scaled in world space
+    scale: () => params.scale, // How large the textures are scaled in world space
     texture0: regl.prop("texture0"),
     texture1: regl.prop("texture1"),
     texture2: regl.prop("texture2"),

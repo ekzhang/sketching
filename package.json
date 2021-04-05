@@ -10,11 +10,10 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "angle-normals": "^1.0.0",
-    "bunny": "^1.0.1",
     "gl-matrix": "^3.3.0",
     "regl": "^2.1.0",
-    "resl": "^1.0.3"
+    "resl": "^1.0.3",
+    "tweakpane": "^2.2.1"
   },
   "devDependencies": {
     "vite": "^2.1.5"
