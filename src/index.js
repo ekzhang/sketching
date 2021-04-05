@@ -15,9 +15,18 @@ import { loadMesh } from "./geometry";
 
 const pane = new Tweakpane();
 const params = {
-  scale: 10,
+  scale: 4,
+  zoom: 0.5,
+  height: 0.2,
+  rotate: true,
+  angle: 0,
 };
-pane.addInput(params, "scale", { min: 1, max: 100, step: 0.1 });
+pane.addInput(params, "scale", { min: 0, max: 10 });
+pane.addInput(params, "zoom", { min: -5, max: 5 });
+pane.addInput(params, "height", { min: -1, max: 1 });
+pane.addSeparator();
+pane.addInput(params, "rotate");
+pane.addInput(params, "angle", { min: -Math.PI, max: Math.PI });
 
 const regl = Regl();
 
@@ -30,11 +39,13 @@ const draw = regl({
   elements,
   uniforms: {
     view: ({ tick }) => {
-      const t = 0.01 * tick;
+      const t = params.rotate ? 0.01 * tick : params.angle;
+      const radius = Math.pow(2, -params.zoom);
+      const height = params.height;
       return mat4.lookAt(
         [],
-        [0.75 * Math.cos(t), 0.2, 0.75 * Math.sin(t)],
-        [0, 0.2, 0],
+        [radius * Math.cos(t), height, radius * Math.sin(t)],
+        [0, height, 0],
         [0, 1, 0]
       );
     },
@@ -51,7 +62,7 @@ const draw = regl({
       c.drawingBufferHeight,
       Math.min(c.drawingBufferWidth, c.drawingBufferHeight),
     ],
-    scale: () => params.scale, // How large the textures are scaled in world space
+    scale: () => Math.pow(2, params.scale), // How large the textures are scaled in world space
     texture0: regl.prop("texture0"),
     texture1: regl.prop("texture1"),
     texture2: regl.prop("texture2"),

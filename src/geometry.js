@@ -29,7 +29,6 @@ export function loadMesh(mesh) {
     texCoordB.push([bau, bav], [0, 0], [bcu, bcv]);
     texCoordC.push([cau, cav], [cbu, cbv], [0, 0]);
   }
-  console.log(texCoordA);
   return {
     elements,
     attributes: {

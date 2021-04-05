@@ -17,7 +17,7 @@ uniform sampler2D texture4;
 
 vec4 sample(vec2 brightness, vec2 uv) {
     vec4 ret;
-    vec2 texCoords = 0.5 + scale * uv;
+    vec2 texCoords = mod(0.5 + scale * uv, 1.0);
     int level = int(5.0 * min(brightness.x / brightness.y, 0.99));
     if (level == 0) {
 		ret = texture2D(texture4, texCoords);
@@ -44,5 +44,4 @@ void main() {
 	vec4 textureC = sample(brightnessC, vTexCoordC) * brightnessC.y;
 
 	gl_FragColor = textureA + textureB + textureC;
-    // gl_FragColor = vec4(vec3(brightnessA.x / brightnessA.y), 1.0);
 }
