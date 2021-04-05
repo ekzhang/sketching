@@ -15,13 +15,13 @@ import { loadMesh } from "./geometry";
 
 const pane = new Tweakpane({ title: "Parameters" });
 const params = {
-  scale: 4,
+  scale: 15,
   zoom: 0.5,
   height: 0.2,
   rotate: true,
   angle: 0,
 };
-pane.addInput(params, "scale", { min: 0, max: 10 });
+pane.addInput(params, "scale", { min: 5, max: 25 });
 pane.addInput(params, "zoom", { min: -5, max: 5 });
 pane.addInput(params, "height", { min: -1, max: 1 });
 pane.addSeparator();
@@ -66,7 +66,7 @@ const draw = regl({
       c.drawingBufferHeight,
       Math.min(c.drawingBufferWidth, c.drawingBufferHeight),
     ],
-    scale: () => Math.pow(2, params.scale), // How large the textures are scaled in world space
+    scale: () => params.scale, // How large the textures are scaled in world space
     texture0: regl.prop("texture0"),
     texture1: regl.prop("texture1"),
     texture2: regl.prop("texture2"),

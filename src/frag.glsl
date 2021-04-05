@@ -1,11 +1,14 @@
 precision mediump float;
 
-varying vec2 vTexCoordA;
-varying vec2 vTexCoordB;
-varying vec2 vTexCoordC;
-varying vec2 brightnessA; // a vector {brightness, 1}
-varying vec2 brightnessB; // a vector {brightness, 1}
-varying vec2 brightnessC; // a vector {brightness, 1}
+varying vec2 brightnessA;
+varying vec2 brightnessB;
+varying vec2 brightnessC;
+varying vec2 vCurvatureA;
+varying vec2 vCurvatureB;
+varying vec2 vCurvatureC;
+varying vec3 vCoordA;
+varying vec3 vCoordB;
+varying vec3 vCoordC;
 
 uniform vec3 resolution;
 uniform float scale;
@@ -15,7 +18,11 @@ uniform sampler2D texture2;
 uniform sampler2D texture3;
 uniform sampler2D texture4;
 
-vec4 sample(vec2 brightness, vec2 uv) {
+vec4 sample(vec2 brightness, vec3 basepoint, vec2 curvature) {
+    vec2 device = (gl_FragCoord.xy - basepoint.xy / basepoint.z) / resolution.y;
+    vec2 dir = normalize(curvature);
+    vec2 uv = vec2(dot(dir, device), -dir.y * device.x + dir.x * device.y);
+
     vec4 ret;
     vec2 texCoords = mod(0.5 + scale * uv, 1.0);
     int level = int(5.0 * min(brightness.x / brightness.y, 0.99));
@@ -34,14 +41,9 @@ vec4 sample(vec2 brightness, vec2 uv) {
 }
 
 void main() {
-	int brightness = int(5.0 * brightnessA.x/brightnessA.y);
-	if (brightness == 5) {
-		brightness = 4;
-	}
-
-	vec4 textureA = sample(brightnessA, vTexCoordA) * brightnessA.y;
-	vec4 textureB = sample(brightnessB, vTexCoordB) * brightnessB.y;
-	vec4 textureC = sample(brightnessC, vTexCoordC) * brightnessC.y;
+	vec4 textureA = sample(brightnessA, vCoordA, vCurvatureA) * brightnessA.y;
+	vec4 textureB = sample(brightnessB, vCoordB, vCurvatureB) * brightnessB.y;
+	vec4 textureC = sample(brightnessC, vCoordC, vCurvatureC) * brightnessC.y;
 
 	gl_FragColor = textureA + textureB + textureC;
 }
