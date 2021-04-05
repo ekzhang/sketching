@@ -93,7 +93,7 @@ resl({
   onDone: (assets) => {
     regl.frame(() => {
       regl.clear({
-        color: [0, 0, 0, 1],
+        color: [0.98, 0.98, 0.98, 1],
       });
       draw(assets);
     });
