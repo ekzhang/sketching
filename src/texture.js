@@ -17,8 +17,8 @@ export function generatePencilTextures(numTextures, width, height) {
 }
 
 //for debugging purposes
-export function displayImageData(imgData){
-  let canvas = document.createElement("canvas")
+export function displayImageData(imgData) {
+  let canvas = document.createElement("canvas");
   let ctx = canvas.getContext("2d");
   ctx.canvas.width = imgData.width;
   ctx.canvas.height = imgData.height;
