@@ -35,6 +35,7 @@ void main() {
     diffuse += max(dot(normalize(light - position), normal), 0.0);
     diffuse += 0.8 * max(dot(normalize(light2 - position), normal), 0.0);
     diffuse += 0.5 * max(dot(normalize(light3 - position), normal), 0.0);
+    diffuse *= 0.75;
 
     float isA = 1.0 - step(0.5, abs(indexInTriangle - 0.0));
     float isB = 1.0 - step(0.5, abs(indexInTriangle - 1.0));

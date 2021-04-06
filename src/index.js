@@ -5,14 +5,9 @@ import Tweakpane from "tweakpane";
 
 import fragmentShader from "./frag.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
-import texture0 from "../textures/texture0.png";
-import texture1 from "../textures/texture1.png";
-import texture2 from "../textures/texture2.png";
-import texture3 from "../textures/texture3.png";
-import texture4 from "../textures/texture4.png";
 import bunny from "../models/bunny_1k.json";
 import { loadMesh } from "./geometry";
-import { generateTextures } from "./texture";
+import { generatePencilTextures } from "./texture";
 
 const pane = new Tweakpane({ title: "Parameters" });
 const params = {
@@ -29,9 +24,16 @@ pane.addSeparator();
 pane.addInput(params, "rotate");
 pane.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
-generateTextures(16, 128, 128, false);
-
 const regl = Regl();
+
+const imageData = generatePencilTextures(16, 128, 128);
+const pencilTextures = regl.texture({
+  data: imageData.data,
+  width: imageData.width,
+  height: imageData.height,
+  mag: "linear",
+  min: "linear",
+});
 
 const { elements, attributes } = loadMesh(bunny);
 
@@ -70,33 +72,16 @@ const draw = regl({
       Math.min(c.drawingBufferWidth, c.drawingBufferHeight),
     ],
     scale: () => params.scale, // How large the textures are scaled in world space
-    texture0: regl.prop("texture0"),
-    texture1: regl.prop("texture1"),
-    texture2: regl.prop("texture2"),
-    texture3: regl.prop("texture3"),
-    texture4: regl.prop("texture4"),
+    pencilTextures: () => pencilTextures,
   },
 });
 
-const textureParser = (data) =>
-  regl.texture({
-    data,
-    mag: "linear",
-    min: "linear",
-  });
-
 resl({
-  manifest: {
-    texture0: { type: "image", src: texture0, parser: textureParser },
-    texture1: { type: "image", src: texture1, parser: textureParser },
-    texture2: { type: "image", src: texture2, parser: textureParser },
-    texture3: { type: "image", src: texture3, parser: textureParser },
-    texture4: { type: "image", src: texture4, parser: textureParser },
-  },
+  manifest: {},
   onDone: (assets) => {
     regl.frame(() => {
       regl.clear({
-        color: [0.98, 0.98, 0.98, 1],
+        color: [1, 1, 1, 1],
       });
       draw(assets);
     });
