@@ -12,6 +12,7 @@ import texture3 from "../textures/texture3.png";
 import texture4 from "../textures/texture4.png";
 import bunny from "../models/bunny_1k.json";
 import { loadMesh } from "./geometry";
+import { generateTextures } from "./texture";
 
 const pane = new Tweakpane({ title: "Parameters" });
 const params = {
@@ -27,6 +28,8 @@ pane.addInput(params, "height", { min: -1, max: 1 });
 pane.addSeparator();
 pane.addInput(params, "rotate");
 pane.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
+
+generateTextures(16, 128, 128, false);
 
 const regl = Regl();
 
