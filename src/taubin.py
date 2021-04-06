@@ -111,6 +111,6 @@ def write_data(mesh, filename):
         json.dump(data, f)
 
 mesh = o3d.io.read_triangle_mesh("../models/bunny_1k.obj")
-#mesh = mesh.subdivide_loop(2)
+mesh = mesh.subdivide_loop(2)
 #visualize_curvature_directions(mesh)
-write_data(mesh, "../models/bunny_1k.json")
+write_data(mesh, "../models/bunny_1k_2_sub.json")

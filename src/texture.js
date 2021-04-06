@@ -16,6 +16,18 @@ export function generatePencilTextures(numTextures, width, height) {
   return new ImageData(textures, width, height * numTextures);
 }
 
+//for debugging purposes
+export function displayImageData(imgData){
+  let canvas = document.createElement("canvas")
+  let ctx = canvas.getContext("2d");
+  ctx.canvas.width = imgData.width;
+  ctx.canvas.height = imgData.height;
+  ctx.putImageData(imgData, 0, 0);
+  let img = document.createElement("img");
+  img.src = canvas.toDataURL("image/png");
+  document.body.appendChild(img);
+}
+
 class Paper {
   constructor(width, height) {
     this.width = width;

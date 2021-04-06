@@ -5,9 +5,9 @@ import Tweakpane from "tweakpane";
 
 import fragmentShader from "./frag.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
-import bunny from "../models/bunny_1k.json";
+import bunny from "../models/bunny_1k_2_sub.json";
 import { loadMesh } from "./geometry";
-import { generatePencilTextures } from "./texture";
+import { displayImageData, generatePencilTextures } from "./texture";
 
 const pane = new Tweakpane({ title: "Parameters" });
 const params = {
@@ -15,18 +15,22 @@ const params = {
   zoom: 0.5,
   height: 0.2,
   rotate: true,
+  speed: 1.0,
   angle: 0,
 };
-pane.addInput(params, "scale", { min: 5, max: 25 });
+pane.addInput(params, "scale", { min: 0, max: 50 });
 pane.addInput(params, "zoom", { min: -5, max: 5 });
 pane.addInput(params, "height", { min: -1, max: 1 });
 pane.addSeparator();
 pane.addInput(params, "rotate");
+pane.addInput(params, "speed", { min: -Math.PI, max: Math.PI });
 pane.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
 const regl = Regl();
 
 const imageData = generatePencilTextures(16, 128, 128);
+//displayImageData(imageData);
+
 const pencilTextures = regl.texture({
   data: imageData.data,
   width: imageData.width,
@@ -45,7 +49,7 @@ const draw = regl({
   uniforms: {
     view: () => {
       if (params.rotate) {
-        params.angle = (params.angle + 0.01) % (2 * Math.PI);
+        params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
         pane.refresh();
       }
       const t = params.angle;
