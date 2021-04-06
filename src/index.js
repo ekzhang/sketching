@@ -36,7 +36,8 @@ const pencilTextures = regl.texture({
   width: imageData.width,
   height: imageData.height,
   mag: "linear",
-  min: "linear",
+  min: "mipmap",
+  mipmap: true,
 });
 
 const { elements, attributes } = loadMesh(bunny);
