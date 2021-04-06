@@ -6,7 +6,7 @@ export function generateTextures(num_textures, width, height, show){
         if(!show){
             canvas.style.display = "none";
         }
-        generateTexture(i/num_textures, canvas, width, height);
+        generateTexture(i/num_textures, canvas, width, height, "texture" + i.toString());
     }
 }
 
@@ -124,13 +124,18 @@ class Paper{
     }
 
     saveCanvas(filepath){
-        //https://stackoverflow.com/questions/10673122/how-to-save-canvas-as-an-image-with-canvas-todataurl
-        var image = this.canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-        window.location.href=image;
+        //https://stackoverflow.com/questions/37859069/how-to-change-save-image-to-file-default-name
+        let textureLink = document.createElement("a");
+        textureLink.download = filepath;
+        document.body.appendChild(textureLink);
+        let dataURL = this.canvas.toDataURL();
+        textureLink.href=dataURL;
+        textureLink.click();
+        textureLink.style.display = "none";
     }
 }
 
-function generateTexture(s, canvas, width, height){
+function generateTexture(s, canvas, width, height, filepath){
     let paper = new Paper(canvas, width, height, 0.5);
     s = s * s;
     let numStrokes = 6000;
@@ -145,5 +150,5 @@ function generateTexture(s, canvas, width, height){
         paper.drawStroke(weight);
     }
     paper.setCanvas();
-    //paper.saveCanvas();
+    //paper.saveCanvas(filepath);
 }
