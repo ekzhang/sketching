@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "gl-matrix": "^3.3.0",
@@ -16,6 +17,7 @@
     "tweakpane": "^2.2.1"
   },
   "devDependencies": {
+    "prettier": "2.2.1",
     "vite": "^2.1.5"
   }
 }
