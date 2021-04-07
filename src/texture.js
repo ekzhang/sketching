@@ -61,7 +61,7 @@ class Paper {
     }
     const newValue = Math.round(oldValue - this.mu_b * intermediateValue);
     this.data[pos] = newValue;
-    this.total += (oldValue - newValue);
+    this.total += oldValue - newValue;
   }
 
   drawPoint(w, h, pressure) {
@@ -75,7 +75,8 @@ class Paper {
         if (dist > this.thickness) {
           continue;
         }
-        const distFactor = Math.sqrt(1 - dist / this.thickness) * Math.pow(Math.random(), 2);
+        const distFactor =
+          Math.sqrt(1 - dist / this.thickness) * Math.pow(Math.random(), 2);
         this.drawPixel(w_nxt, h_nxt, pressure * distFactor);
       }
     }
@@ -99,7 +100,7 @@ class Paper {
 
   drawTexture(darkness) {
     let weight = darkness * darkness;
-    let maxNumStrokes = Math.pow(1/this.thickness, 2) * 100 * this.height;
+    let maxNumStrokes = Math.pow(1 / this.thickness, 2) * 100 * this.height;
     if (weight < 0.3) {
       maxNumStrokes = weight * (1.0 / 0.3) * maxNumStrokes;
       weight = 0.3;
@@ -107,7 +108,7 @@ class Paper {
     let targetTotal = 255.0 * darkness * this.width * this.height;
     for (let i = 0; i < maxNumStrokes; i++) {
       this.drawStroke(weight);
-      if(this.total >= targetTotal){
+      if (this.total >= targetTotal) {
         break;
       }
     }

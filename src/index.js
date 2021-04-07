@@ -1,5 +1,4 @@
 import Regl from "regl";
-import resl from "resl";
 import { mat4 } from "gl-matrix";
 import Tweakpane from "tweakpane";
 
@@ -26,7 +25,7 @@ pane.addInput(params, "rotate");
 pane.addInput(params, "speed", { min: -1.0, max: 1.0 });
 pane.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
-const regl = Regl();
+const regl = Regl({ extensions: ["OES_standard_derivatives"] });
 
 const numTextures = 64;
 const imageData = generatePencilTextures(numTextures, 64, 64);
@@ -49,20 +48,9 @@ const draw = regl({
   attributes,
   elements,
   uniforms: {
-    view: () => {
-      if (params.rotate) {
-        params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
-        pane.refresh();
-      }
-      const t = params.angle;
-      const radius = Math.pow(2, -params.zoom);
-      const height = params.height;
-      return mat4.lookAt(
-        [],
-        [radius * Math.cos(t), height, radius * Math.sin(t)],
-        [0, height, 0],
-        [0, 1, 0]
-      );
+    eye: regl.prop("eye"),
+    view: (context, props) => {
+      return mat4.lookAt([], props.eye, props.center, [0, 1, 0]);
     },
     projection: ({ viewportWidth, viewportHeight }) =>
       mat4.perspective(
@@ -77,20 +65,27 @@ const draw = regl({
       c.drawingBufferHeight,
       Math.min(c.drawingBufferWidth, c.drawingBufferHeight),
     ],
+    pixelRatio: regl.context("pixelRatio"),
     scale: () => params.scale, // How large the textures are scaled in world space
     numTextures: () => 1.0 * numTextures,
     pencilTextures: () => pencilTextures,
   },
 });
 
-resl({
-  manifest: {},
-  onDone: (assets) => {
-    regl.frame(() => {
-      regl.clear({
-        color: [1, 1, 1, 1],
-      });
-      draw(assets);
-    });
-  },
+regl.frame(() => {
+  if (params.rotate) {
+    params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
+    pane.refresh();
+  }
+  const t = params.angle;
+  const radius = Math.pow(2, -params.zoom);
+  const height = params.height;
+
+  regl.clear({
+    color: [1, 1, 1, 1],
+  });
+  draw({
+    eye: [radius * Math.cos(t), height, radius * Math.sin(t)],
+    center: [0, height, 0],
+  });
 });

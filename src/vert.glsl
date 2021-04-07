@@ -1,10 +1,12 @@
 precision mediump float;
 
 uniform mat4 view, projection;
+uniform vec3 resolution;
 
 attribute vec3 position, normal, curvature;
 attribute float indexInTriangle; // 0=A, 1=B, 2=C
 
+varying vec3 vPosition, vNormal;
 varying vec2 brightnessA;
 varying vec2 brightnessB;
 varying vec2 brightnessC;
@@ -15,8 +17,6 @@ varying vec3 vCoordA;
 varying vec3 vCoordB;
 varying vec3 vCoordC;
 
-uniform vec3 resolution;
-
 vec2 screenspace(vec3 dir) {
     vec4 mvp = projection * view * vec4(position, 1.0);
     vec4 mvp2 = projection * view * vec4(position + dir, 1.0);
@@ -24,6 +24,8 @@ vec2 screenspace(vec3 dir) {
 }
 
 void main() {
+    vPosition = position;
+    vNormal = normal;
   	vec4 modelViewPosition = view * vec4(position, 1.0);
   	gl_Position = projection * modelViewPosition;
 
