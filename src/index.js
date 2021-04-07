@@ -8,14 +8,20 @@ import { saveImage, loadImage } from "./utils";
 import fragmentShader from "./frag.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
 import pencilTexturesUrl from "../textures/texture_256_64_64.png";
-import bunnyUrl from "../models/bunny_1k_2_sub.json?url";
+import bunnyLargeUrl from "../models/bunny_1k_2_sub.json?url";
+import bunnySmallUrl from "../models/bunny_1k.json?url";
 
 const regl = Regl({ extensions: ["OES_standard_derivatives"] });
+
+const meshes = {
+  "Bunny Large": bunnyLargeUrl,
+  "Bunny Small": bunnySmallUrl,
+};
 
 class Renderer {
   async start() {
     this.initPane();
-    await Promise.all([this.initTextures(), this.loadMesh(bunnyUrl)]);
+    await Promise.all([this.initTextures(), this.loadMesh()]);
 
     regl.frame(() => {
       if (this.params.rotate) {
@@ -39,6 +45,7 @@ class Renderer {
     const pane = new Tweakpane({ title: "Parameters" });
     const params = {
       scale: 15,
+      mesh: bunnyLargeUrl,
       zoom: 0.8,
       height: 0.2,
       rotate: true,
@@ -47,6 +54,9 @@ class Renderer {
     };
 
     pane.addInput(params, "scale", { min: 0, max: 50 });
+    pane.addInput(params, "mesh", { options: meshes }).on("change", () => {
+      this.loadMesh();
+    });
 
     const camera = pane.addFolder({ title: "Camera" });
     camera.addInput(params, "zoom", { min: -5, max: 5 });
@@ -110,8 +120,8 @@ class Renderer {
     this.setTextures(texParams.number, textures);
   }
 
-  async loadMesh(url) {
-    const resp = await fetch(url);
+  async loadMesh() {
+    const resp = await fetch(this.params.mesh);
     const mesh = await resp.json();
     const { attributes, elements } = loadMesh(mesh);
     this.attributes = attributes;
