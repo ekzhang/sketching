@@ -12,6 +12,7 @@ varying vec3 vCoordC;
 
 uniform vec3 resolution;
 uniform float scale;
+uniform float numTextures;
 uniform sampler2D pencilTextures;
 
 vec4 sample(vec2 brightness, vec3 basepoint, vec2 curvature) {
@@ -20,8 +21,8 @@ vec4 sample(vec2 brightness, vec3 basepoint, vec2 curvature) {
     vec2 uv = vec2(dot(dir, device), -dir.y * device.x + dir.x * device.y);
 
     vec2 texCoords = mod(0.5 + scale * uv, 1.0);
-    float level = 15.0 - floor(16.0 * brightness.x / brightness.y);
-    texCoords.y = (level + texCoords.y) / 16.0;
+    float level = numTextures - 1.0 - floor(numTextures * brightness.x / brightness.y);
+    texCoords.y = (level + texCoords.y) / numTextures;
     return texture2D(pencilTextures, texCoords);
 }
 

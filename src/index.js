@@ -15,7 +15,7 @@ const params = {
   zoom: 0.5,
   height: 0.2,
   rotate: true,
-  speed: 1.0,
+  speed: 0.5,
   angle: 0,
 };
 pane.addInput(params, "scale", { min: 0, max: 50 });
@@ -23,12 +23,13 @@ pane.addInput(params, "zoom", { min: -5, max: 5 });
 pane.addInput(params, "height", { min: -1, max: 1 });
 pane.addSeparator();
 pane.addInput(params, "rotate");
-pane.addInput(params, "speed", { min: -Math.PI, max: Math.PI });
+pane.addInput(params, "speed", { min: -1.0, max: 1.0 });
 pane.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
 const regl = Regl();
 
-const imageData = generatePencilTextures(16, 128, 128);
+const numTextures = 64;
+const imageData = generatePencilTextures(numTextures, 64, 64);
 //displayImageData(imageData);
 
 const pencilTextures = regl.texture({
@@ -77,6 +78,7 @@ const draw = regl({
       Math.min(c.drawingBufferWidth, c.drawingBufferHeight),
     ],
     scale: () => params.scale, // How large the textures are scaled in world space
+    numTextures: () => 1.0 * numTextures,
     pencilTextures: () => pencilTextures,
   },
 });

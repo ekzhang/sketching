@@ -33,8 +33,9 @@ class Paper {
     this.width = width;
     this.height = height;
     this.thickness = 0.5;
-    this.mu_b = 0.3;
+    this.mu_b = 0.1;
     this.data = new Uint8ClampedArray(width * height);
+    this.total = 0;
     this.clear();
   }
 
@@ -42,6 +43,7 @@ class Paper {
     for (let i = 0; i < this.width * this.height; i++) {
       this.data[i] = 0xff;
     }
+    this.total = 0;
   }
 
   fromWH(w, h) {
@@ -59,6 +61,7 @@ class Paper {
     }
     const newValue = Math.round(oldValue - this.mu_b * intermediateValue);
     this.data[pos] = newValue;
+    this.total += (oldValue - newValue);
   }
 
   drawPoint(w, h, pressure) {
@@ -72,7 +75,7 @@ class Paper {
         if (dist > this.thickness) {
           continue;
         }
-        const distFactor = Math.sqrt(1 - dist / this.thickness) * Math.random();
+        const distFactor = Math.sqrt(1 - dist / this.thickness) * Math.pow(Math.random(), 2);
         this.drawPixel(w_nxt, h_nxt, pressure * distFactor);
       }
     }
@@ -96,13 +99,18 @@ class Paper {
 
   drawTexture(darkness) {
     let weight = darkness * darkness;
-    let numStrokes = 6000;
+    let maxNumStrokes = Math.pow(1/this.thickness, 2) * 100 * this.height;
     if (weight < 0.3) {
-      numStrokes = weight * (1.0 / 0.3) * 6000;
+      maxNumStrokes = weight * (1.0 / 0.3) * maxNumStrokes;
       weight = 0.3;
     }
-    for (let i = 0; i < numStrokes; i++) {
+    let targetTotal = 255.0 * darkness * this.width * this.height;
+    for (let i = 0; i < maxNumStrokes; i++) {
       this.drawStroke(weight);
+      if(this.total >= targetTotal){
+        break;
+      }
     }
+    //console.log(this.total, targetTotal);
   }
 }
