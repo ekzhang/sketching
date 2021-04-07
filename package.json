@@ -11,6 +11,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "byte-base64": "^1.1.0",
     "gl-matrix": "^3.3.0",
     "regl": "^2.1.0",
     "resl": "^1.0.3",

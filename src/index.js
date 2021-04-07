@@ -4,9 +4,14 @@ import Tweakpane from "tweakpane";
 
 import fragmentShader from "./frag.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
+import rawTexture from "../textures/texture_256_64_64.json";
 import bunny from "../models/bunny_1k_2_sub.json";
 import { loadMesh } from "./geometry";
-import { displayImageData, generatePencilTextures } from "./texture";
+import {
+  TextureData,
+  displayImageData,
+  generatePencilTextures,
+} from "./texture";
 
 const pane = new Tweakpane({ title: "Parameters" });
 const params = {
@@ -27,14 +32,18 @@ pane.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
 const regl = Regl({ extensions: ["OES_standard_derivatives"] });
 
-const numTextures = 64;
-const imageData = generatePencilTextures(numTextures, 64, 64);
-//displayImageData(imageData);
+const width = rawTexture.width;
+const height = rawTexture.height;
+const numTextures = rawTexture.numTextures;
+//const texture = generatePencilTextures(numTextures, width, height);
+//console.log(JSON.stringify(texture));
+const texture = new TextureData(rawTexture.data, width, height, numTextures);
+//displayImageData(texture);
 
 const pencilTextures = regl.texture({
-  data: imageData.data,
-  width: imageData.width,
-  height: imageData.height,
+  data: texture.data,
+  width: width,
+  height: height * numTextures,
   mag: "linear",
   min: "mipmap",
   mipmap: true,
