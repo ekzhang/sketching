@@ -1,8 +1,8 @@
-export function saveImage(imageData) {
+export function saveImage(filepath, imageData) {
   const canvas = document.createElement("canvas");
   document.body.appendChild(canvas);
-  canvas.width = this.width;
-  canvas.height = this.height;
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
   canvas.getContext("2d").putImageData(imageData, 0, 0);
   const dataUrl = canvas.toDataURL();
   canvas.remove();
@@ -12,4 +12,12 @@ export function saveImage(imageData) {
   document.body.appendChild(textureLink);
   textureLink.click();
   textureLink.remove();
+}
+
+export function loadImage(url) {
+  const img = document.createElement("img");
+  img.src = url;
+  return new Promise((resolve) => {
+    img.onload = () => resolve(img);
+  });
 }

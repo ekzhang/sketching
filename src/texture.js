@@ -1,26 +1,3 @@
-import * as base64 from "byte-base64";
-
-export class TextureData {
-  constructor(data, width, height, numTextures) {
-    if (typeof data === "string") {
-      this.data = new Uint8ClampedArray(base64.base64ToBytes(data));
-    } else {
-      this.data = data;
-    }
-    this.width = width;
-    this.height = height;
-    this.numTextures = numTextures;
-  }
-  toJSON() {
-    return {
-      numTextures: this.numTextures,
-      width: this.width,
-      height: this.height,
-      data: base64.bytesToBase64(this.data),
-    };
-  }
-}
-
 export function generatePencilTextures(numTextures, width, height) {
   const paper = new Paper(width, height);
   const textures = new Uint8ClampedArray(4 * width * height * numTextures);
@@ -36,24 +13,7 @@ export function generatePencilTextures(numTextures, width, height) {
     }
     paper.clear();
   }
-  return new TextureData(textures, width, height, numTextures);
-}
-
-//for debugging purposes
-export function displayImageData(textureData) {
-  const imgData = new ImageData(
-    textureData.data,
-    textureData.width,
-    textureData.height * textureData.numTextures
-  );
-  let canvas = document.createElement("canvas");
-  let ctx = canvas.getContext("2d");
-  ctx.canvas.width = imgData.width;
-  ctx.canvas.height = imgData.height;
-  ctx.putImageData(imgData, 0, 0);
-  let img = document.createElement("img");
-  img.src = canvas.toDataURL("image/png");
-  document.body.appendChild(img);
+  return new ImageData(textures, width, height * numTextures);
 }
 
 class Paper {
