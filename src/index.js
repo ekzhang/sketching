@@ -69,13 +69,11 @@ class Renderer {
     const textures = pane.addFolder({ title: "Textures" });
     const texParams = {
       number: 64,
-      width: 64,
-      height: 64,
+      logsize: 6,
       save: false,
     };
     textures.addInput(texParams, "number", { min: 8, max: 256, step: 8 });
-    textures.addInput(texParams, "width", { min: 16, max: 128, step: 8 });
-    textures.addInput(texParams, "height", { min: 16, max: 128, step: 8 });
+    textures.addInput(texParams, "logsize", { min: 4, max: 7, step: 1 });
     textures.addInput(texParams, "save");
     textures.addButton({ title: "Generate" }).on("click", () => {
       this.generateTextures(texParams);
@@ -101,15 +99,12 @@ class Renderer {
   }
 
   generateTextures(texParams) {
-    const img = generatePencilTextures(
-      texParams.number,
-      texParams.width,
-      texParams.height
-    );
+    const size = Math.pow(2, texParams.logsize);
+    const img = generatePencilTextures(texParams.number, size, size);
     const textures = regl.texture({
       data: img.data,
-      width: texParams.width,
-      height: texParams.height * texParams.number,
+      width: size,
+      height: size * texParams.number,
       mag: "linear",
       min: "mipmap",
       mipmap: true,

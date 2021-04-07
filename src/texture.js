@@ -100,6 +100,5 @@ class Paper {
         break;
       }
     }
-    //console.log(this.total, targetTotal);
   }
 }
