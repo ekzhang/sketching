@@ -1,5 +1,3 @@
-import { vec3 } from "gl-matrix";
-
 /**
  * Load a mesh, returning an expanded form with calculated attributes.
  *
