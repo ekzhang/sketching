@@ -1,4 +1,3 @@
-#extension GL_OES_standard_derivatives : enable
 precision mediump float;
 
 uniform vec3 resolution;
@@ -48,19 +47,32 @@ vec3 perp(vec3 dir) {
         normalize(cross(dir, vec3(0.0, 1.0, 0.0)));
 }
 
-// Compute principal curvature values
-vec2 calcCurvature(vec3 pos, vec3 normal) {
+// Compute minimum curvature direction
+vec3 calcCurvature(vec3 pos, vec3 normal) {
     vec3 uu = perp(normal);
     vec3 vv = normalize(cross(uu, normal));
     const float eps = 0.002;
     const float eps2 = eps * eps;
     float val = map(pos);
+
+    // Hessian matrix - estimate II in local coordinates
     float dxx = (map(pos + eps * uu) + map(pos - eps * uu) - 2.0 * val) / eps2;
     float dyy = (map(pos + eps * vv) + map(pos - eps * vv) - 2.0 * val) / eps2;
-    float dxy = (map(pos + eps * (uu + vv)) + map(pos + eps * (-uu - vv)) -
-                 map(pos + eps * (uu - vv)) - map(pos + eps * (-uu + vv))) / (4.0 * eps2);
-    float D = sqrt((dxx - dyy) * (dxx - dyy) + 4.0 * dxy * dxy);
-    return vec2(dxx + dyy + D, dxx + dyy - D) / 2.0;
+    float ddxy = (map(pos + eps * (uu + vv)) + map(pos + eps * (-uu - vv)) -
+                  map(pos + eps * (uu - vv)) - map(pos + eps * (-uu + vv))) / (2.0 * eps2);
+
+    // If we happen to already have a diagonal matrix, then just return
+    if (ddxy == 0.0) {
+        return abs(dxx) < abs(dyy) ? uu : vv;
+    }
+
+    // Eigenvalues and eigenvectors of 2x2 Hessian
+    float D = sqrt((dxx - dyy) * (dxx - dyy) + ddxy * ddxy);
+    float lam1 = (dxx + dyy + D) / 2.0;
+    vec3 v1 = normalize(ddxy * uu + (dyy - dxx + D) * vv);
+    float lam2 = (dxx + dyy - D) / 2.0;
+    vec3 v2 = normalize(ddxy * uu + (dyy - dxx - D) * vv);
+    return abs(lam1) < abs(lam2) ? v1 : v2;
 }
 
 void main() {
@@ -88,8 +100,8 @@ void main() {
         vec3 pos = eye + t * dir;
         vec3 normal = calcNormal(pos);
         if (cmode) {
-            vec2 curv = calcCurvature(pos, normal);
-            color = vec3(0.2 * curv + 0.5, -0.2 * curv.x * 0.5); // for now
+            vec3 curv = calcCurvature(pos, normal);
+            color = abs(curv);
         }
         else {
             color = vec3(0.5) + 0.5 * normal;
