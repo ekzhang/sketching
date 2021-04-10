@@ -10,6 +10,7 @@ const config = {
       input: {
         main: resolve(__dirname, "index.html"),
         sketching: resolve(__dirname, "sketching/index.html"),
+        sdf: resolve(__dirname, "sdf/index.html"),
       },
     },
   },
