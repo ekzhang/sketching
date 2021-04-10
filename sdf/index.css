@@ -1,0 +1,7 @@
+body {
+  overscroll-behavior-y: none;
+}
+
+canvas {
+  z-index: -1;
+}
