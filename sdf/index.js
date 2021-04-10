@@ -2,9 +2,18 @@ import Regl from "regl";
 import Tweakpane from "tweakpane";
 
 import fragmentShader from "./frag.glsl?raw";
+import fragmentShader2 from "./frag2.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
 
-const regl = Regl({ extensions: ["OES_standard_derivatives"] });
+const regl = Regl({
+  extensions: ["WEBGL_draw_buffers", "OES_texture_float"],
+});
+
+const fbo = regl.framebuffer({
+  color: [regl.texture({ type: "float" }), regl.texture({ type: "float" })],
+  depth: false, // Don't need a depth buffer because flat square
+});
+
 const [pane, params] = initPane();
 
 function initPane() {
@@ -16,12 +25,12 @@ function initPane() {
     rotate: true,
     speed: 0.5,
     angle: 0,
-    mode: "curvature",
+    mode: 2,
   };
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
   pane.addInput(params, "mode", {
-    options: { curvature: "curvature", normal: "normal" },
+    options: { curvature: 2, normal: 1 },
   });
 
   const camera = pane.addFolder({ title: "Camera" });
@@ -35,9 +44,7 @@ function initPane() {
   return [pane, params];
 }
 
-const draw = regl({
-  frag: fragmentShader,
-  vert: vertexShader,
+const common = regl({
   attributes: {
     position: [
       [-1, 1],
@@ -58,12 +65,26 @@ const draw = regl({
       drawingBufferHeight,
       Math.min(drawingBufferWidth, drawingBufferHeight),
     ],
-    scale: () => params.scale, // How large the textures are scaled in world space
-    cmode: () => params.mode === "curvature",
   },
 });
 
-regl.frame(() => {
+const drawGeom = regl({
+  frag: fragmentShader,
+  vert: vertexShader,
+  framebuffer: fbo,
+});
+
+const drawColor = regl({
+  frag: fragmentShader2,
+  vert: vertexShader,
+  uniforms: {
+    normalTex: fbo.color[0],
+    curvTex: fbo.color[1],
+    cmode: () => params.mode,
+  },
+});
+
+regl.frame(({ viewportWidth, viewportHeight }) => {
   if (params.rotate) {
     params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
     pane.refresh();
@@ -72,9 +93,16 @@ regl.frame(() => {
   const radius = Math.pow(2, -params.zoom);
   const height = params.height;
 
-  regl.clear({ color: [1, 1, 1, 1] });
-  draw({
+  const props = {
     eye: [radius * Math.cos(t), height, radius * Math.sin(t)],
     center: [0, 0, 0],
+  };
+
+  common(props, () => {
+    fbo.resize(viewportWidth, viewportHeight);
+    regl.clear({ framebuffer: fbo, color: [0, 0, 0, 0] });
+    drawGeom();
+    regl.clear({ color: [1, 1, 1, 1] });
+    drawColor();
   });
 });

@@ -1,9 +1,9 @@
+#extension GL_EXT_draw_buffers : require
 precision mediump float;
 
 uniform vec3 resolution;
 uniform vec3 eye;
 uniform vec3 center;
-uniform bool cmode;
 
 // -- Begin primitive SDFs from
 // https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
@@ -99,14 +99,14 @@ void main() {
     if (t < tmax) {
         vec3 pos = eye + t * dir;
         vec3 normal = calcNormal(pos);
-        if (cmode) {
-            vec3 curv = calcCurvature(pos, normal);
-            color = abs(curv);
-        }
-        else {
-            color = vec3(0.5) + 0.5 * normal;
-        }
-    }
 
-    gl_FragColor = vec4(color, 1.0);
+        // World-space curvature vector
+        vec3 curv = calcCurvature(pos, normal);
+
+        gl_FragData[0] = vec4(normal, 0.0);
+        gl_FragData[1] = vec4(curv, 0.0);
+
+        // Screen-space curvature vector
+        vec2 ssc = normalize(vec2(dot(curv, uu), dot(curv, vv)));
+    }
 }
