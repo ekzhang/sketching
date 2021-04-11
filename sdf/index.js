@@ -6,6 +6,7 @@ import fragmentShader2 from "./frag2.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
 import pencilTexturesUrl from "../textures/texture_256_64_64.png";
 import { loadImage } from "../common/utils";
+import createCamera from "../common/camera";
 
 const regl = Regl({
   extensions: [
@@ -13,6 +14,11 @@ const regl = Regl({
     "OES_texture_float",
     "OES_standard_derivatives",
   ],
+});
+
+const camera = createCamera(document.getElementsByTagName("canvas")[0], {
+  eye: [1.7, 1.5, 2.9],
+  center: [0, 0, 0],
 });
 
 const fbo = regl.framebuffer({
@@ -35,11 +41,6 @@ function initPane() {
     grid: 20,
     example: 2,
     mode: 3,
-    zoom: -1.75,
-    height: 1.5,
-    rotate: true,
-    speed: 0.5,
-    angle: 0,
   };
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
@@ -48,14 +49,6 @@ function initPane() {
   pane.addInput(params, "mode", {
     options: { shading: 3, curvature: 2, normal: 1 },
   });
-
-  const camera = pane.addFolder({ title: "Camera" });
-  camera.addInput(params, "zoom", { min: -5, max: 5 });
-  camera.addInput(params, "height", { min: -10, max: 10 });
-  camera.addSeparator();
-  camera.addInput(params, "rotate");
-  camera.addInput(params, "speed", { min: -1.0, max: 1.0 });
-  camera.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
   return [pane, params];
 }
@@ -85,8 +78,8 @@ const common = regl({
     [2, 1, 3],
   ],
   uniforms: {
-    eye: regl.prop("eye"),
-    center: regl.prop("center"),
+    eye: () => camera.eye,
+    center: () => camera.center,
     resolution: ({ drawingBufferWidth, drawingBufferHeight }) => [
       drawingBufferWidth,
       drawingBufferHeight,
@@ -122,20 +115,7 @@ const drawColor = regl({
 
 initTextures().then(() => {
   regl.frame(({ viewportWidth, viewportHeight }) => {
-    if (params.rotate) {
-      params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
-      pane.refresh();
-    }
-    const t = params.angle;
-    const radius = Math.pow(2, -params.zoom);
-    const height = params.height;
-
-    const props = {
-      eye: [radius * Math.cos(t), height, radius * Math.sin(t)],
-      center: [0, 0, 0],
-    };
-
-    common(props, () => {
+    common(() => {
       fbo.resize(viewportWidth, viewportHeight);
       regl.clear({ framebuffer: fbo, color: [0, 0, 0, 0] });
       drawGeom();

@@ -4,4 +4,9 @@ body {
 
 canvas {
   z-index: -1;
+  cursor: grab;
+}
+
+canvas:active {
+  cursor: grabbing;
 }
