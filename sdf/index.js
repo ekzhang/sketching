@@ -32,15 +32,19 @@ function initPane() {
   const pane = new Tweakpane({ title: "Parameters" });
   const params = {
     scale: 15,
-    zoom: -1.0,
+    grid: 20,
+    example: 2,
+    mode: 3,
+    zoom: -1.75,
     height: 1.5,
     rotate: true,
     speed: 0.5,
     angle: 0,
-    mode: 3,
   };
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
+  pane.addInput(params, "grid", { min: 5, max: 40, step: 1 });
+  pane.addInput(params, "example", { options: { torus: 1, csg: 2 } });
   pane.addInput(params, "mode", {
     options: { shading: 3, curvature: 2, normal: 1 },
   });
@@ -96,6 +100,9 @@ const drawGeom = regl({
   frag: fragmentShader,
   vert: vertexShader,
   framebuffer: fbo,
+  uniforms: {
+    example: () => params.example,
+  },
 });
 
 const drawColor = regl({
@@ -107,6 +114,7 @@ const drawColor = regl({
     colorTex: fbo.color[2],
     cmode: () => params.mode,
     scale: () => params.scale,
+    grid: () => params.grid,
     numTextures: () => numTextures,
     pencilTextures: () => pencilTextures,
   },

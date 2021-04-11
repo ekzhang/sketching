@@ -6,12 +6,22 @@ uniform vec3 resolution;
 uniform float pixelRatio;
 uniform vec3 eye;
 uniform vec3 center;
+uniform int example;
 
 // -- Begin primitive SDFs from
 // https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
 
 float sdSphere(vec3 p, float s) {
     return length(p)-s;
+}
+
+float sdBox(vec3 p, vec3 b) {
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+float sdCylinder(vec3 p, vec3 c) {
+  return length(p.xz-c.xy)-c.z;
 }
 
 float sdTorus(vec3 p, vec2 t) {
@@ -27,9 +37,17 @@ float opSmoothUnion( float d1, float d2, float k ) {
 }
 
 float map(vec3 pos) {
-    float torus = sdTorus(pos, vec2(1.0, 0.15));
-    float sphere = sdSphere(pos - vec3(1.0, 0.0, 0.0), 0.2);
-    return opSmoothUnion(torus, sphere, 0.4);
+    if (example == 1) {
+        float torus = sdTorus(pos, vec2(1.0, 0.15));
+        float sphere = sdSphere(pos - vec3(1.0, 0.0, 0.0), 0.2);
+        return opSmoothUnion(torus, sphere, 0.4);
+    } else if (example == 2) {
+        float base = max(sdSphere(pos, 1.0), sdBox(pos, vec3(0.75)));
+        float cyl1 = sdCylinder(pos.xyz, vec3(0.0, 0.0, 0.5));
+        float cyl2 = sdCylinder(pos.yzx, vec3(0.0, 0.0, 0.5));
+        float cyl3 = sdCylinder(pos.zxy, vec3(0.0, 0.0, 0.5));
+        return max(-min(cyl1, min(cyl2, cyl3)), base);
+    }
 }
 
 // http://iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
@@ -77,10 +95,20 @@ vec3 calcCurvature(vec3 pos, vec3 normal) {
     return abs(lam1) < abs(lam2) ? v1 : v2;
 }
 
+float lambert(vec3 pos, vec3 normal, vec3 light) {
+    vec3 wo = light - pos;
+    return max(0.0, dot(normalize(wo), normal)) / dot(wo, wo);
+}
+
 // Lambertian shading
 vec3 calcColor(vec3 pos, vec3 normal) {
-    vec3 wo = vec3(0.8, 2.0, 0.5) - pos;
-    float mag = 3.0 * max(0.0, dot(normalize(wo), normal)) / dot(wo, wo);
+    float mag = 0.0;
+    if (example == 1) {
+        mag += 3.0 * lambert(pos, normal, vec3(0.8, 2.0, 0.5));
+    } else if (example == 2) {
+        mag += 2.0 * lambert(pos, normal, vec3(1.5, 2.0, 1.0));
+        mag += 15.0 * lambert(pos, normal, vec3(0.0, 8.0, 0.0));
+    }
     return vec3(sqrt(mag + 0.001)); // inverse gamma correction
 }
 
@@ -92,7 +120,7 @@ void main() {
     vec3 ww = normalize(center - eye);
     vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));
     vec3 vv = normalize(cross(uu, ww));
-    vec3 dir = normalize(p.x * uu + p.y * vv + 1.5 * ww);
+    vec3 dir = normalize(p.x * uu + p.y * vv + 3.0 * ww);
 
     // Ray-marching
     float tmax = 100.0;

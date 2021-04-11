@@ -8,10 +8,9 @@ uniform sampler2D curvTex;
 uniform sampler2D colorTex;
 uniform int cmode;
 uniform float scale;
+uniform float grid;
 uniform float numTextures;
 uniform sampler2D pencilTextures;
-
-const float w = 20.0;
 
 vec3 calc(vec2 coord) {
     // Texture coordinates
@@ -50,14 +49,14 @@ void main() {
             return; // this is a background pixel
         }
 
-        vec2 p0 = gl_FragCoord.xy - mod(gl_FragCoord.xy, w);
-        vec2 f = (gl_FragCoord.xy - p0) / w;
+        vec2 p0 = gl_FragCoord.xy - mod(gl_FragCoord.xy, grid);
+        vec2 f = (gl_FragCoord.xy - p0) / grid;
 
         vec3 data = vec3(0.0);
         data += (1.0 - f.x) * (1.0 - f.y) * calc(p0);
-        data += f.x * (1.0 - f.y) * calc(p0 + vec2(w, 0));
-        data += (1.0 - f.x) * f.y * calc(p0 + vec2(0, w));
-        data += f.x * f.y * calc(p0 + vec2(w, w));
+        data += f.x * (1.0 - f.y) * calc(p0 + vec2(grid, 0));
+        data += (1.0 - f.x) * f.y * calc(p0 + vec2(0, grid));
+        data += f.x * f.y * calc(p0 + vec2(grid, grid));
         data /= data.z;
 
         // Adjust darkness to match actual Phong-interpolated color
