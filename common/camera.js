@@ -8,13 +8,13 @@ function createCamera(canvas, { eye, center }) {
 
   const begin = (event) => {
     tracking = true;
-    last = [event.screenX / canvas.width, event.screenY / canvas.height];
+    last = [event.screenX / canvas.height, event.screenY / canvas.height];
   };
 
   const update = (event) => {
     if (!tracking) return;
     const [x, y] = [
-      event.screenX / canvas.width,
+      event.screenX / canvas.height,
       event.screenY / canvas.height,
     ];
     const [lastX, lastY] = last;
@@ -26,8 +26,7 @@ function createCamera(canvas, { eye, center }) {
     let phi = Math.atan2(v[2], v[0]);
 
     theta = Math.min(Math.max(theta - 5 * (y - lastY), 1e-8), Math.PI - 1e-8);
-    console.log(theta);
-    phi += 10 * (x - lastX);
+    phi += 5 * (x - lastX);
     vec3.set(
       camera.eye,
       r * Math.cos(phi) * Math.sin(theta),
