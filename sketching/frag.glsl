@@ -24,7 +24,7 @@ vec4 sample(vec2 brightness, vec3 basepoint, vec2 curvature) {
     vec2 dir = normalize(curvature);
     vec2 uv = vec2(dot(dir, device), -dir.y * device.x + dir.x * device.y);
 
-    vec2 texCoords = mod(0.5 + scale * uv, 1.0);
+    vec2 texCoords = fract(0.5 + scale * uv);
     float level = numTextures - 1.0 - floor(numTextures * brightness.x / brightness.y);
     texCoords.y = (level + texCoords.y) / numTextures;
     return texture2D(pencilTextures, texCoords);

@@ -4,17 +4,25 @@ import Tweakpane from "tweakpane";
 import fragmentShader from "./frag.glsl?raw";
 import fragmentShader2 from "./frag2.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
+import pencilTexturesUrl from "../textures/texture_256_64_64.png";
+import { loadImage } from "../common/utils";
 
 const regl = Regl({
   extensions: ["WEBGL_draw_buffers", "OES_texture_float"],
 });
 
 const fbo = regl.framebuffer({
-  color: [regl.texture({ type: "float" }), regl.texture({ type: "float" })],
+  color: [
+    regl.texture({ type: "float" }),
+    regl.texture({ type: "float" }),
+    regl.texture({ type: "float" }),
+  ],
   depth: false, // Don't need a depth buffer because flat square
 });
 
 const [pane, params] = initPane();
+
+let numTextures, pencilTextures;
 
 function initPane() {
   const pane = new Tweakpane({ title: "Parameters" });
@@ -25,12 +33,12 @@ function initPane() {
     rotate: true,
     speed: 0.5,
     angle: 0,
-    mode: 2,
+    mode: 3,
   };
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
   pane.addInput(params, "mode", {
-    options: { curvature: 2, normal: 1 },
+    options: { shading: 3, curvature: 2, normal: 1 },
   });
 
   const camera = pane.addFolder({ title: "Camera" });
@@ -42,6 +50,17 @@ function initPane() {
   camera.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
   return [pane, params];
+}
+
+async function initTextures() {
+  const textures = regl.texture({
+    data: await loadImage(pencilTexturesUrl),
+    mag: "linear",
+    min: "mipmap",
+    mipmap: true,
+  });
+  numTextures = 256;
+  pencilTextures = textures;
 }
 
 const common = regl({
@@ -80,29 +99,35 @@ const drawColor = regl({
   uniforms: {
     normalTex: fbo.color[0],
     curvTex: fbo.color[1],
+    colorTex: fbo.color[2],
     cmode: () => params.mode,
+    scale: () => params.scale,
+    numTextures: () => numTextures,
+    pencilTextures: () => pencilTextures,
   },
 });
 
-regl.frame(({ viewportWidth, viewportHeight }) => {
-  if (params.rotate) {
-    params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
-    pane.refresh();
-  }
-  const t = params.angle;
-  const radius = Math.pow(2, -params.zoom);
-  const height = params.height;
+initTextures().then(() => {
+  regl.frame(({ viewportWidth, viewportHeight }) => {
+    if (params.rotate) {
+      params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
+      pane.refresh();
+    }
+    const t = params.angle;
+    const radius = Math.pow(2, -params.zoom);
+    const height = params.height;
 
-  const props = {
-    eye: [radius * Math.cos(t), height, radius * Math.sin(t)],
-    center: [0, 0, 0],
-  };
+    const props = {
+      eye: [radius * Math.cos(t), height, radius * Math.sin(t)],
+      center: [0, 0, 0],
+    };
 
-  common(props, () => {
-    fbo.resize(viewportWidth, viewportHeight);
-    regl.clear({ framebuffer: fbo, color: [0, 0, 0, 0] });
-    drawGeom();
-    regl.clear({ color: [1, 1, 1, 1] });
-    drawColor();
+    common(props, () => {
+      fbo.resize(viewportWidth, viewportHeight);
+      regl.clear({ framebuffer: fbo, color: [0, 0, 0, 0] });
+      drawGeom();
+      regl.clear({ color: [1, 1, 1, 1] });
+      drawColor();
+    });
   });
 });

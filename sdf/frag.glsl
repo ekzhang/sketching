@@ -75,6 +75,13 @@ vec3 calcCurvature(vec3 pos, vec3 normal) {
     return abs(lam1) < abs(lam2) ? v1 : v2;
 }
 
+// Lambertian shading
+vec3 calcColor(vec3 pos, vec3 normal) {
+    vec3 wo = vec3(0.8, 2.0, 0.5) - pos;
+    float mag = 3.0 * max(0.0, dot(normalize(wo), normal)) / dot(wo, wo);
+    return vec3(sqrt(mag + 0.001)); // inverse gamma correction
+}
+
 void main() {
     // Pixel coordinates, normalized so that p.y in range [-1, 1]
     vec2 p = (2.0 * gl_FragCoord.xy - resolution.xy) / resolution.y;
@@ -103,10 +110,16 @@ void main() {
         // World-space curvature vector
         vec3 curv = calcCurvature(pos, normal);
 
-        gl_FragData[0] = vec4(normal, 0.0);
-        gl_FragData[1] = vec4(curv, 0.0);
-
         // Screen-space curvature vector
-        vec2 ssc = normalize(vec2(dot(curv, uu), dot(curv, vv)));
+        vec2 sbase = vec2(dot(dir, uu), dot(dir, vv)) / dot(dir, ww);
+        vec3 wto = pos + curv - eye;
+        vec2 sto = vec2(dot(wto, uu), dot(wto, vv)) / dot(wto, ww);
+        vec2 ssc = normalize(sto - sbase);
+
+        vec3 color = calcColor(pos, normal);
+
+        gl_FragData[0] = vec4(normal, 1.0);
+        gl_FragData[1] = vec4(ssc, 0.0, 1.0);
+        gl_FragData[2] = vec4(color, 1.0);
     }
 }
