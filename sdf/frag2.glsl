@@ -62,6 +62,7 @@ void main() {
 
         // Adjust darkness to match actual Phong-interpolated color
         float color = data.x * (color4.x / data.y);
-        gl_FragColor = vec4(vec3(color), 1.0);
+        float cartoonEdge = texture2D(normalTex, tp).w;
+        gl_FragColor = vec4(mix(vec3(0.3), vec3(color), cartoonEdge), 1.0);
     }
 }

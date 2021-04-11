@@ -8,7 +8,11 @@ import pencilTexturesUrl from "../textures/texture_256_64_64.png";
 import { loadImage } from "../common/utils";
 
 const regl = Regl({
-  extensions: ["WEBGL_draw_buffers", "OES_texture_float"],
+  extensions: [
+    "WEBGL_draw_buffers",
+    "OES_texture_float",
+    "OES_standard_derivatives",
+  ],
 });
 
 const fbo = regl.framebuffer({
@@ -84,6 +88,7 @@ const common = regl({
       drawingBufferHeight,
       Math.min(drawingBufferWidth, drawingBufferHeight),
     ],
+    pixelRatio: regl.context("pixelRatio"),
   },
 });
 

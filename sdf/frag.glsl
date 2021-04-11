@@ -1,7 +1,9 @@
 #extension GL_EXT_draw_buffers : require
+#extension GL_OES_standard_derivatives : enable
 precision mediump float;
 
 uniform vec3 resolution;
+uniform float pixelRatio;
 uniform vec3 eye;
 uniform vec3 center;
 
@@ -118,7 +120,11 @@ void main() {
 
         vec3 color = calcColor(pos, normal);
 
-        gl_FragData[0] = vec4(normal, 1.0);
+        float vDotN = abs(dot(normalize(normal), normalize(pos - eye)));
+        float vDotNGrad = fwidth(vDotN);
+        float cartoonEdge = smoothstep(0.75, 1.25, vDotN / vDotNGrad / 3.0 / pixelRatio);
+
+        gl_FragData[0] = vec4(normal, cartoonEdge);
         gl_FragData[1] = vec4(ssc, 0.0, 1.0);
         gl_FragData[2] = vec4(color, 1.0);
     }
