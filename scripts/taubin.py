@@ -1,8 +1,62 @@
 import open3d as o3d
 import numpy as np
 from scipy.linalg import eig
+import mcubes #pip install --upgrade PyMCubes
 import json
 
+# -- Begin primitive SDFs from
+# https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
+
+def length(p):
+    return np.linalg.norm(p, axis=-1)
+
+def mix(x, y, a):
+    return (1-a)*x + a*y
+
+def sdSphere(p, s):
+    return length(p) - s
+
+def sdBox(p, b):
+    q = np.abs(p) - b
+    return length(np.maximum(q, 0)) + np.minimum(np.amax(q, axis=-1), 0)
+
+def sdCylinder(p, c):
+    return length(np.take(p, [0,2], -1) -np.take(c, [0,1], -1)) - c[...,2]
+
+def sdTorus(p, t):
+    q = np.concatenate([length(np.take(p, [0,2], -1))[...,None]-t[...,0],p[...,1][...,None]], axis=-1)
+    return length(q)-t[...,1]
+
+# End primitive SDFs --
+
+def opSmoothUnion(d1, d2, k):
+    h = np.clip( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 )
+    return mix( d2, d1, h) - k*h*(1-h)
+
+def sdf_map(pos, example):
+    if example == 1:
+        torus = sdTorus(pos, np.array([1.0, 0.15]))
+        sphere = sdSphere(pos - np.array([1.0, 0.0, 0.0]), 0.2)
+        return opSmoothUnion(torus, sphere, 0.4)
+    elif example == 2:
+        base = np.maximum(sdSphere(pos, 1.0), sdBox(pos, np.array([0.75]*3)))
+        cyl1 = sdCylinder(np.take(pos,[0,1,2], -1), np.array([0.0, 0.0, 0.5]))
+        cyl2 = sdCylinder(np.take(pos,[1,2,0], -1), np.array([0.0, 0.0, 0.5]))
+        cyl3 = sdCylinder(np.take(pos,[2,0,1], -1), np.array([0.0, 0.0, 0.5]))
+        return np.maximum(-np.amin([cyl1, cyl2, cyl3], axis=0), base)
+
+def mesh_from_sdf(example, n=40):
+    x = np.linspace(-2, 2, n)
+    y = np.linspace(-2, 2, n)
+    z = np.linspace(-2, 2, n)
+    coord_grid = np.concatenate([coord[...,None] for coord in np.meshgrid(x, y, z, sparse=False)], axis=-1)
+    sdf_grid = sdf_map(coord_grid, example)
+    vertices, triangles = mcubes.marching_cubes(sdf_grid, 0)
+    print(vertices.shape, triangles.shape)
+    mesh = o3d.geometry.TriangleMesh()
+    mesh.vertices = o3d.utility.Vector3dVector(vertices)
+    mesh.triangles = o3d.utility.Vector3iVector(triangles[:,::-1])
+    return mesh
 
 def compute_curvature_directions(mesh):
     mesh.compute_vertex_normals()
@@ -58,7 +112,9 @@ def compute_curvature_directions(mesh):
                 curvature_min[i,:] = eigvecs[:,j]
             else:
                 curvature_max[i,:] = eigvecs[:,j]
-        assert cnt == 1, "Eigenvector equal to normal not found"
+        #assert cnt == 1, "Eigenvector equal to normal not found"
+        if cnt != 1:
+            print("???", i)
 
     return curvature_min, curvature_max
 
@@ -91,14 +147,44 @@ def visualize_curvature_directions(mesh, l=0.01, show_normals=False):
     else:
         o3d.visualization.draw_geometries([mesh, line_set_min, line_set_max])
 
+def center_mesh(mesh):
+    vertices = np.array(mesh.vertices)
+    mean = np.mean(vertices, axis=0)
+    mean[1] = 0
+    width = np.amax(np.abs(vertices-mean))
+    new_vertices = (vertices-mean)/(4*width)
+    #new_vertices[:,2] -= np.amin(new_vertices[:,2])
+    mesh.vertices = o3d.utility.Vector3dVector(new_vertices)
+    return mesh
+
+#https://stackoverflow.com/questions/1447287/format-floats-with-standard-json-module
+def pretty_floats(obj):
+    if isinstance(obj, float):
+        return float("%.5g" % obj)
+    elif isinstance(obj, dict):
+        return dict((k, pretty_floats(v)) for k, v in obj.items())
+    elif isinstance(obj, (list, tuple)):
+        return list(map(pretty_floats, obj))
+    return obj
+
 def write_data(mesh, filename):
     mesh.compute_vertex_normals()
     vertices = np.array(mesh.vertices).tolist()
     normals = np.array(mesh.vertex_normals).tolist()
     triangles = np.array(mesh.triangles).tolist()
+    #curvature_min, curvature_max = [[1,0,0] for i in range(len(vertices))], [[0,1,0] for i in range(len(vertices))]
     curvature_min, curvature_max = compute_curvature_directions(mesh)
     curvature_min = curvature_min.tolist()
     curvature_max = curvature_max.tolist()
+
+    for x in vertices:
+        assert x is not None
+    for x in normals:
+        assert x is not None
+    for x in curvature_min:
+        assert x is not None
+    for x in curvature_max:
+        assert x is not None
 
     data = {
         "positions": vertices,
@@ -108,9 +194,14 @@ def write_data(mesh, filename):
         "curvature_max": curvature_max,
     }
     with open(filename, "w") as f:
-        json.dump(data, f)
+        json.dump(pretty_floats(data), f)
 
-mesh = o3d.io.read_triangle_mesh("../models/bunny_1k.obj")
-mesh = mesh.subdivide_loop(2)
-#visualize_curvature_directions(mesh)
-write_data(mesh, "../models/bunny_1k_2_sub.json")
+#mesh = o3d.geometry.TriangleMesh.create_box()
+#mesh = mesh_from_sdf(1, 160)
+mesh = o3d.io.read_triangle_mesh("../../bunny/reconstruction/bun_zipper.ply")
+#mesh = mesh.simplify_quadric_decimation(50000)
+#mesh = o3d.io.read_triangle_mesh("../models/teapot.obj")
+#mesh = mesh.subdivide_loop(2)
+mesh = center_mesh(mesh)
+visualize_curvature_directions(mesh)
+write_data(mesh, "../models/bunny_large.json")
