@@ -30,9 +30,9 @@ const meshes = {
 const regl = Regl({ extensions: ["OES_standard_derivatives"] });
 
 const camera = createCamera(document.getElementsByTagName("canvas")[0], {
-    eye: [1.7, 1.5, 2.9],
-    center: [0, 0, 0],
-  });
+  eye: [1.7, 1.5, 2.9],
+  center: [0, 0, 0],
+});
 
 const [pane, params] = initPane();
 
@@ -123,7 +123,7 @@ const draw = regl({
     },
     projection: ({ viewportWidth, viewportHeight }) => {
       const ratio = viewportWidth / viewportHeight;
-      return mat4.perspective([], Math.PI / 4, ratio, 0.01, 1000);
+      return mat4.perspective([], Math.PI / 5, ratio, 0.01, 1000);
     },
     resolution: ({ drawingBufferWidth, drawingBufferHeight }) => [
       drawingBufferWidth,
@@ -134,9 +134,6 @@ const draw = regl({
     scale: () => params.scale, // How large the textures are scaled in world space
     numTextures: () => numTextures,
     pencilTextures: () => pencilTextures,
-  },
-  cull: {
-    enable: true,
   },
 });
 
