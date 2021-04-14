@@ -5,6 +5,7 @@ import Tweakpane from "tweakpane";
 import { loadMesh } from "../common/geometry";
 import { generatePencilTextures } from "../common/texture";
 import { saveImage, loadImage } from "../common/utils";
+import createCamera from "../common/camera";
 import fragmentShader from "./frag.glsl?raw";
 import vertexShader from "./vert.glsl?raw";
 import pencilTexturesUrl from "../textures/texture_256_64_64.png";
@@ -27,6 +28,12 @@ const meshes = {
 };
 
 const regl = Regl({ extensions: ["OES_standard_derivatives"] });
+
+const camera = createCamera(document.getElementsByTagName("canvas")[0], {
+    eye: [1.7, 1.5, 2.9],
+    center: [0, 0, 0],
+  });
+
 const [pane, params] = initPane();
 
 let numTextures, pencilTextures, attributes, elements;
@@ -45,14 +52,6 @@ function initPane() {
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
   pane.addInput(params, "mesh", { options: meshes }).on("change", updateMesh);
-
-  const camera = pane.addFolder({ title: "Camera" });
-  camera.addInput(params, "zoom", { min: -5, max: 5 });
-  camera.addInput(params, "height", { min: -1, max: 1 });
-  camera.addSeparator();
-  camera.addInput(params, "rotate");
-  camera.addInput(params, "speed", { min: -1.0, max: 1.0 });
-  camera.addInput(params, "angle", { min: 0, max: 2 * Math.PI });
 
   const textures = pane.addFolder({ title: "Textures" });
   const texParams = {
@@ -143,18 +142,10 @@ const draw = regl({
 
 Promise.all([initTextures(), updateMesh()]).then(() => {
   regl.frame(() => {
-    if (params.rotate) {
-      params.angle = (params.angle + params.speed / 100.0) % (2 * Math.PI);
-      pane.refresh();
-    }
-    const t = params.angle;
-    const radius = Math.pow(2, -params.zoom);
-    const height = params.height;
-
     regl.clear({ color: [1, 1, 1, 1] });
     draw({
-      eye: [radius * Math.cos(t), height, radius * Math.sin(t)],
-      center: [0, height, 0],
+      eye: camera.eye,
+      center: camera.center,
     });
   });
 });

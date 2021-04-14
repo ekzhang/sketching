@@ -3,6 +3,7 @@ import numpy as np
 from scipy.linalg import eig
 import mcubes #pip install --upgrade PyMCubes
 import json
+import argparse
 
 # -- Begin primitive SDFs from
 # https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
@@ -105,7 +106,7 @@ def compute_curvature_directions(mesh):
         cnt = 0
         for j in range(3):
             test_normal = np.dot(eigvecs[:,j], normals[i])
-            if abs(test_normal ** 2 - 1) < 1e-3:
+            if abs(test_normal ** 2 - 1) < 1e-1:
                 cnt += 1
                 continue
             if 2 * eigvals[j] < np.sum(eigvals):
@@ -114,7 +115,9 @@ def compute_curvature_directions(mesh):
                 curvature_max[i,:] = eigvecs[:,j]
         #assert cnt == 1, "Eigenvector equal to normal not found"
         if cnt != 1:
-            print("???", i)
+            #only occurs when matrix is all zero
+            print("???", i, cnt)
+            print(matrices[i])
 
     return curvature_min, curvature_max
 
@@ -150,10 +153,8 @@ def visualize_curvature_directions(mesh, l=0.01, show_normals=False):
 def center_mesh(mesh):
     vertices = np.array(mesh.vertices)
     mean = np.mean(vertices, axis=0)
-    mean[1] = 0
-    width = np.amax(np.abs(vertices-mean))
-    new_vertices = (vertices-mean)/(4*width)
-    #new_vertices[:,2] -= np.amin(new_vertices[:,2])
+    normalization = np.amax(np.linalg.norm(vertices-mean, axis=-1))
+    new_vertices = (vertices-mean)/normalization
     mesh.vertices = o3d.utility.Vector3dVector(new_vertices)
     return mesh
 
@@ -196,12 +197,61 @@ def write_data(mesh, filename):
     with open(filename, "w") as f:
         json.dump(pretty_floats(data), f)
 
-#mesh = o3d.geometry.TriangleMesh.create_box()
-#mesh = mesh_from_sdf(1, 160)
-mesh = o3d.io.read_triangle_mesh("../../bunny/reconstruction/bun_zipper.ply")
-#mesh = mesh.simplify_quadric_decimation(50000)
-#mesh = o3d.io.read_triangle_mesh("../models/teapot.obj")
-#mesh = mesh.subdivide_loop(2)
-mesh = center_mesh(mesh)
-visualize_curvature_directions(mesh)
-write_data(mesh, "../models/bunny_large.json")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--source",
+        default = "model",
+        choices = ["model", "sdf"],
+        required = True
+    )
+    parser.add_argument(
+        "--input",
+        type = str,
+        required = False,
+        help = "input file (model)"
+    )
+    parser.add_argument(
+        "--example",
+        default = 1,
+        type = int,
+        help = "example (sdf)"
+    )
+    parser.add_argument(
+        "--resolution",
+        default = 100,
+        type = int,
+        help = "grid size n x n x n (sdf)"
+    )
+    parser.add_argument(
+        "--output",
+        type = str,
+        required = True,
+        help = "output file"
+    )
+    parser.add_argument('--vis', dest='vis', action='store_true')
+    parser.add_argument('--no-vis', dest='vis', action='store_false')
+    parser.set_defaults(vis=False)
+    parser.add_argument('--simplify', dest='simplify', action='store_true')
+    parser.add_argument('--no-simplify', dest='simplify', action='store_false')
+    parser.set_defaults(simplify=True)
+    parser.add_argument(
+        "--target_num",
+        default = 10000,
+        type = int,
+        help = "number of triangles after simplification"
+    )
+    args = parser.parse_args()
+    
+    if args.source == "model":
+        mesh = o3d.io.read_triangle_mesh(args.input)
+    else:
+        mesh = mesh_from_sdf(args.example, args.resolution)
+    
+    if args.simplify:
+        mesh = mesh.simplify_quadric_decimation(args.target_num)
+
+    mesh = center_mesh(mesh)
+    if args.vis:
+        visualize_curvature_directions(mesh)
+    write_data(mesh, args.output)
