@@ -13,7 +13,6 @@ import bunnyLargeUrl from "../models/bunny_1k_2_sub.json?url";
 import bunnySmallUrl from "../models/bunny_1k.json?url";
 import teapotUrl from "../models/teapot.json?url";
 import armadilloUrl from "../models/armadillo.json?url";
-import dragonUrl from "../models/dragon.json?url";
 import csgUrl from "../models/csg.json?url";
 import torusUrl from "../models/torus.json?url";
 
@@ -22,7 +21,6 @@ const meshes = {
   "Bunny Small": bunnySmallUrl,
   "Utah Teapot": teapotUrl,
   Armadillo: armadilloUrl,
-  Dragon: dragonUrl,
   CSG: csgUrl,
   Torus: torusUrl,
 };
