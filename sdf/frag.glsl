@@ -95,19 +95,26 @@ vec3 calcCurvature(vec3 pos, vec3 normal) {
     return abs(lam1) < abs(lam2) ? v1 : v2;
 }
 
-float lambert(vec3 pos, vec3 normal, vec3 light) {
-    vec3 wo = light - pos;
-    return max(0.0, dot(normalize(wo), normal)) / dot(wo, wo);
+float phong(vec3 pos, vec3 normal, vec3 light) {
+    vec3 wi = light - pos;
+    float intensity = 1.0 / dot(wi, wi);
+    float diffuse = max(dot(normalize(wi), normal), 0.0);
+
+    vec3 wo = normalize(eye - pos);
+    vec3 r = -reflect(normalize(wi), normal);
+    float specular = 0.5 * pow(max(dot(r, wo), 0.0), 10.0);
+
+    return intensity * (diffuse + specular);
 }
 
-// Lambertian shading
+// Phong shading
 vec3 calcColor(vec3 pos, vec3 normal) {
     float mag = 0.0;
     if (example == 1) {
-        mag += 3.0 * lambert(pos, normal, vec3(0.8, 2.0, 0.5));
+        mag += 3.0 * phong(pos, normal, vec3(0.0, 2.0, 0.0));
     } else if (example == 2) {
-        mag += 2.0 * lambert(pos, normal, vec3(1.5, 2.0, 1.0));
-        mag += 15.0 * lambert(pos, normal, vec3(0.0, 8.0, 0.0));
+        mag += 6.0 * phong(pos, normal, vec3(2.5, 3.0, 1.0));
+        mag += 10.0 * phong(pos, normal, vec3(0.0, 8.0, 0.0));
     }
     return vec3(sqrt(mag + 0.001)); // inverse gamma correction
 }

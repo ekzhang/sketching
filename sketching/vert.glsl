@@ -2,6 +2,7 @@ precision mediump float;
 
 uniform mat4 view, projection;
 uniform vec3 resolution;
+uniform vec3 eye;
 
 attribute vec3 position, normal, curvature;
 attribute float indexInTriangle; // 0=A, 1=B, 2=C
@@ -23,21 +24,29 @@ vec2 screenspace(vec3 dir) {
     return (mvp2.xy / mvp2.w) - (mvp.xy / mvp.w);
 }
 
+float illuminate(vec3 lightPosition) {
+    vec3 wi = lightPosition - position;
+    float intensity = 1.0 / dot(wi, wi);
+    float diffuse = max(dot(normalize(wi), normal), 0.0);
+
+    vec3 wo = normalize(eye - position);
+    vec3 r = -reflect(normalize(wi), normal);
+    float specular = 0.5 * pow(max(dot(r, wo), 0.0), 5.0);
+
+    return intensity * (diffuse + specular);
+}
+
 void main() {
     vPosition = position;
     vNormal = normal;
   	vec4 modelViewPosition = view * vec4(position, 1.0);
   	gl_Position = projection * modelViewPosition;
 
-    // Gouraud shading at each vertex, using Lambertian BRDF
-    vec3 light = vec3(0.0, 10.0, 10.0);
-    vec3 light2 = vec3(10.0, 10.0, -10.0);
-    vec3 light3 = vec3(-5.0, 2.0, 0.0);
+    // Gouraud shading at each vertex, using Phong BRDF
     float diffuse = 0.0;
-    diffuse += max(dot(normalize(light - position), normal), 0.0);
-    diffuse += 0.8 * max(dot(normalize(light2 - position), normal), 0.0);
-    diffuse += 0.5 * max(dot(normalize(light3 - position), normal), 0.0);
-    diffuse *= 0.75;
+    diffuse += 120.0 * illuminate(vec3(0.0, 10.0, 10.0));
+    diffuse += 100.0 * illuminate(vec3(10.0, 10.0, -10.0));
+    diffuse += 10.0 * illuminate(vec3(-5.0, 2.0, 0.0));
 
     float isA = 1.0 - step(0.5, abs(indexInTriangle - 0.0));
     float isB = 1.0 - step(0.5, abs(indexInTriangle - 1.0));
