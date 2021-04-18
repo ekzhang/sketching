@@ -11,9 +11,9 @@ import vertexShader from "./vert.glsl?raw";
 import pencilTexturesUrl from "../textures/texture_256_64_64.png";
 import bunnyLargeUrl from "../models/bunny_1k_2_sub.json?url";
 import bunnySmallUrl from "../models/bunny_1k.json?url";
-import teapotUrl from "../models/teapot.json?url";
+import teapotUrl from "../models/clean_teapot.json?url";
 import armadilloUrl from "../models/armadillo.json?url";
-import csgUrl from "../models/csg.json?url";
+import csgUrl from "../models/clean_csg.json?url";
 import torusUrl from "../models/torus.json?url";
 
 const meshes = {

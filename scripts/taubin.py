@@ -93,6 +93,9 @@ def compute_curvature_directions(mesh):
             continue
         for u, tri in edges[i]:
             uv = (vertices[u] - vertices[i])[:,None]
+            if areas[tri] < 1e-8:
+                print(areas[tri], np.inner(uv[:,0], uv[:,0]))
+                continue
             innuv = inn @ uv
             t = (innuv) / np.linalg.norm(innuv)
             kappa = 2 * np.inner(nv[:,0], uv[:,0]) / np.inner(uv[:,0], uv[:,0])
@@ -100,6 +103,8 @@ def compute_curvature_directions(mesh):
             total_area += areas[tri]
             matrices[i,:,:] += areas[tri] * kappa * (t @ t.T)
 
+        if total_area < 1e-8:
+            total_area = 1
         matrices[i,:,:] /= total_area
 
         eigvals, eigvecs = eig(matrices[i])
