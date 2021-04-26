@@ -21,7 +21,7 @@ uniform vec3 eye;
 
 vec4 sample(vec2 brightness, vec3 basepoint, vec2 curvature) {
     vec2 device = (gl_FragCoord.xy - basepoint.xy / basepoint.z) / resolution.y;
-    vec2 dir = normalize(curvature);
+    vec2 dir = length(curvature) > 0.0 ? normalize(curvature) : vec2(0.0, 1.0);
     vec2 uv = vec2(dot(dir, device), -dir.y * device.x + dir.x * device.y);
 
     vec2 texCoords = fract(0.5 + scale * uv);
