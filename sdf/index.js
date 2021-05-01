@@ -41,6 +41,7 @@ function initPane() {
     grid: 20,
     example: 2,
     mode: 3,
+    fps: "---",
   };
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
@@ -49,6 +50,7 @@ function initPane() {
   pane.addInput(params, "mode", {
     options: { shading: 3, curvature: 2, normal: 1 },
   });
+  pane.addMonitor(params, "fps");
 
   return [pane, params];
 }
@@ -114,7 +116,14 @@ const drawColor = regl({
 });
 
 initTextures().then(() => {
+  const frameTimes = [...Array(60)].fill(0);
   regl.frame(({ viewportWidth, viewportHeight }) => {
+    const lastTime = frameTimes.shift();
+    const time = performance.now();
+    frameTimes.push(time);
+    if (lastTime !== 0) {
+      params.fps = (1000 / ((time - lastTime) / frameTimes.length)).toFixed(2);
+    }
     common(() => {
       fbo.resize(viewportWidth, viewportHeight);
       regl.clear({ framebuffer: fbo, color: [0, 0, 0, 0] });

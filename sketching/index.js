@@ -46,10 +46,12 @@ function initPane() {
     rotate: true,
     speed: 0.5,
     angle: 0,
+    fps: "---",
   };
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
   pane.addInput(params, "mesh", { options: meshes }).on("change", updateMesh);
+  pane.addMonitor(params, "fps");
 
   const textures = pane.addFolder({ title: "Textures" });
   const texParams = {
@@ -136,7 +138,14 @@ const draw = regl({
 });
 
 Promise.all([initTextures(), updateMesh()]).then(() => {
+  const frameTimes = [...Array(60)].fill(0);
   regl.frame(() => {
+    const lastTime = frameTimes.shift();
+    const time = performance.now();
+    frameTimes.push(time);
+    if (lastTime !== 0) {
+      params.fps = (1000 / ((time - lastTime) / frameTimes.length)).toFixed(2);
+    }
     regl.clear({ color: [1, 1, 1, 1] });
     draw({
       eye: camera.eye,
