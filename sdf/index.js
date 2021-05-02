@@ -46,7 +46,7 @@ function initPane() {
 
   pane.addInput(params, "scale", { min: 0, max: 50 });
   pane.addInput(params, "grid", { min: 5, max: 40, step: 1 });
-  pane.addInput(params, "example", { options: { torus: 1, csg: 2 } });
+  pane.addInput(params, "example", { options: { torus: 1, csg: 2, blobs: 3 } });
   pane.addInput(params, "mode", {
     options: { shading: 3, curvature: 2, normal: 1 },
   });
@@ -88,6 +88,7 @@ const common = regl({
       Math.min(drawingBufferWidth, drawingBufferHeight),
     ],
     pixelRatio: regl.context("pixelRatio"),
+    time: regl.context("time"),
   },
 });
 

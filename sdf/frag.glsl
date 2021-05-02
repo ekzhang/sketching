@@ -4,6 +4,7 @@ precision mediump float;
 
 uniform vec3 resolution;
 uniform float pixelRatio;
+uniform float time;
 uniform vec3 eye;
 uniform vec3 center;
 uniform int example;
@@ -25,15 +26,25 @@ float sdCylinder(vec3 p, vec3 c) {
 }
 
 float sdTorus(vec3 p, vec2 t) {
-    vec2 q = vec2(length(p.xz)-t.x,p.y);
-    return length(q)-t.y;
+  vec2 q = vec2(length(p.xz)-t.x,p.y);
+  return length(q)-t.y;
 }
+
+float sdVerticalCapsule(vec3 p, float h, float r) {
+  p.y -= clamp(p.y, 0.0, h);
+  return length(p) - r;
+}
+
 
 // End primitive SDFs --
 
 float opSmoothUnion( float d1, float d2, float k ) {
     float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
     return mix( d2, d1, h ) - k*h*(1.0-h);
+}
+
+mat2 rotate(float theta) {
+    return mat2(cos(theta), -sin(theta), sin(theta), cos(theta));
 }
 
 float map(vec3 pos) {
@@ -47,6 +58,17 @@ float map(vec3 pos) {
         float cyl2 = sdCylinder(pos.yzx, vec3(0.0, 0.0, 0.5));
         float cyl3 = sdCylinder(pos.zxy, vec3(0.0, 0.0, 0.5));
         return max(-min(cyl1, min(cyl2, cyl3)), base);
+    } else if (example == 3) {
+        const float tau = 6.28318;
+        float phase = time / 10.0;
+        float torus1 = sdTorus(vec3(rotate(tau * phase) * pos.xy, pos.z), vec2(0.8, 0.2));
+        float torus2 = sdTorus(vec3(pos.x, rotate(tau * (phase + 0.6)) * pos.yz), vec2(0.8, 0.2));
+
+        vec3 vpos = vec3(rotate(2.0 * tau * phase) * pos.xy, pos.z);
+        vpos.y += 0.8 + 0.1 * sin(tau * phase * 1.2);
+        float rod = sdVerticalCapsule(vpos, 1.6, 0.2);
+
+        return opSmoothUnion(opSmoothUnion(torus1, torus2, 0.4), rod, 0.6);
     }
 }
 
@@ -115,6 +137,10 @@ vec3 calcColor(vec3 pos, vec3 normal) {
     } else if (example == 2) {
         mag += 6.0 * phong(pos, normal, vec3(2.5, 3.0, 1.0));
         mag += 10.0 * phong(pos, normal, vec3(0.0, 8.0, 0.0));
+    } else if (example == 3) {
+        mag += 5.0 * phong(pos, normal, vec3(0.0, 4.0, 0.0));
+        mag += 4.0 * phong(pos, normal, vec3(2.5, 3.0, 1.0));
+        mag += 1.5 * phong(pos, normal, vec3(-5.0, -1.0, -5.0));
     }
     return vec3(sqrt(mag + 0.001)); // inverse gamma correction
 }
