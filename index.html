@@ -11,6 +11,34 @@
       crossorigin="anonymous"
     />
     <style>
+      h1 {
+        font-size: 2.4rem;
+        font-weight: 500;
+        margin-bottom: 28px;
+      }
+
+      .icon {
+        display: block;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 8px;
+      }
+
+      .link-group {
+        text-align: center;
+        margin: 0 24px;
+        color: black;
+        font-size: 0.9rem;
+        font-weight: bold;
+        transition: opacity 0.2s;
+      }
+
+      .link-group:hover {
+        text-decoration: none;
+        color: black;
+        opacity: 0.75;
+      }
+
       .thumbnail {
         position: relative;
         width: 100%;
@@ -32,15 +60,40 @@
     </style>
   </head>
   <body>
-    <div class="jumbotron container my-sm-4">
-      <h1 class="text-center display-4">Sketching</h1>
-      <p class="text-center lead">
+    <div class="jumbotron container my-sm-4" style="background-color: #f7fafc">
+      <h1 class="text-center">
         Geometry Processing for Real-Time Pencil Sketching
-      </p>
-      <p class="text-center font-weight-bold">
-        <a href="https://github.com/ekzhang/sketching">GitHub</a> &bullet;
-        <a href="#">Paper</a>
-      </p>
+      </h1>
+      <div class="d-flex justify-content-center">
+        <div class="mx-4 mb-2 text-center d-flex flex-column">
+          <strong>Eric Zhang</strong>
+          <small>Harvard</small>
+        </div>
+        <div class="mx-4 mb-2 text-center d-flex flex-column">
+          <strong>Victor Rong</strong>
+          <small>MIT</small>
+        </div>
+      </div>
+      <div class="d-flex justify-content-center mt-3">
+        <a
+          class="link-group"
+          href="https://github.com/ekzhang/sketching"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img class="icon" src="/icons/github.svg" />
+          <p>Code</p>
+        </a>
+        <a
+          class="link-group"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img class="icon" src="/icons/file-alt.svg" />
+          <p>Paper</p>
+        </a>
+      </div>
       <div class="row">
         <div class="col-12 col-sm-4">
           <img
@@ -86,8 +139,8 @@
       <div class="row mt-4">
         <div class="col-12 col-sm-6">
           <a
-            class="btn btn-primary btn-lg btn-block"
-            href="/sketching/"
+            class="btn btn-primary btn-lg btn-block mb-2 mb-sm-0"
+            href="/mesh/"
             role="button"
             >Mesh Sketching</a
           >
