@@ -264,13 +264,16 @@ def get_lineset(vertices, vectors, color, l=0.01):
     line_set.colors = o3d.utility.Vector3dVector(colors)
     return line_set
 
-def visualize_curvature_directions(mesh, l=0.01, show_normals=False):
+def visualize_curvature_directions(mesh, l=0.01, show_normals=False, taubin=False):
     mesh.compute_vertex_normals()
     vertices = np.array(mesh.vertices)
     normals = np.array(mesh.vertex_normals)
     n = vertices.shape[0]
-    #curvature_min, curvature_max = compute_curvature_directions_rusinkiewicz(mesh)
-    curvature_min, curvature_max = compute_curvature_directions_taubin(mesh)
+    if taubin:
+        curvature_min, curvature_max = compute_curvature_directions_taubin(mesh)
+    else:
+        curvature_min, curvature_max = compute_curvature_directions_rusinkiewicz(mesh)
+    
 
     line_set_max = get_lineset(vertices, curvature_max, [1, 0, 0])
     line_set_min = get_lineset(vertices, curvature_min, [0, 1, 0])
@@ -299,13 +302,16 @@ def pretty_floats(obj):
         return list(map(pretty_floats, obj))
     return obj
 
-def write_data(mesh, filename):
+def write_data(mesh, filename, taubin=False):
     mesh.compute_vertex_normals()
     vertices = np.array(mesh.vertices).tolist()
     normals = np.array(mesh.vertex_normals).tolist()
     triangles = np.array(mesh.triangles).tolist()
     #curvature_min, curvature_max = [[1,0,0] for i in range(len(vertices))], [[0,1,0] for i in range(len(vertices))]
-    curvature_min, curvature_max = compute_curvature_directions_taubin(mesh)
+    if taubin:
+        curvature_min, curvature_max = compute_curvature_directions_taubin(mesh)
+    else:
+        curvature_min, curvature_max = compute_curvature_directions_rusinkiewicz(mesh)
     curvature_min = curvature_min.tolist()
     curvature_max = curvature_max.tolist()
 
@@ -367,6 +373,8 @@ if __name__ == "__main__":
         required = True,
         help = "output file"
     )
+    parser.add_argument('--taubin', dest='taubin', action='store_true')
+    parser.set_defaults(taubin=False)
     parser.add_argument('--vis', dest='vis', action='store_true')
     parser.add_argument('--no-vis', dest='vis', action='store_false')
     parser.set_defaults(vis=False)
@@ -391,5 +399,5 @@ if __name__ == "__main__":
 
     mesh = center_mesh(mesh)
     if args.vis:
-        visualize_curvature_directions(mesh)
-    write_data(mesh, args.output)
+        visualize_curvature_directions(mesh, taubin=args.taubin)
+    write_data(mesh, args.output, taubin=args.taubin)
