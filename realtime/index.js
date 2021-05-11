@@ -6,8 +6,12 @@ import { loadMesh } from "../common/geometry";
 import { generatePencilTextures } from "../common/texture";
 import { saveImage, loadImage } from "../common/utils";
 import createCamera from "../common/camera";
-import fragmentShader from "./frag.glsl?raw";
-import vertexShader from "./vert.glsl?raw";
+import fragmentShaderA from "./frag.glsl?raw";
+import fragmentShaderB from "./frag2.glsl?raw";
+import fragmentShaderC from "./frag3.glsl?raw";
+import vertexShaderA from "./vert.glsl?raw";
+import vertexShaderB from "./vert2.glsl?raw";
+import vertexShaderC from "./vert3.glsl?raw";
 import pencilTexturesUrl from "../textures/texture_256_64_64.png";
 import bunnyLargeUrl from "../models/bunny_1k_2_sub.json?url";
 import bunnySmallUrl from "../models/bunny_1k.json?url";
@@ -25,7 +29,14 @@ const meshes = {
   Torus: torusUrl,
 };
 
-const regl = Regl({ extensions: ["OES_standard_derivatives"] });
+const regl = Regl({
+  extensions: [
+    "WEBGL_draw_buffers",
+    "OES_texture_float",
+    "OES_texture_float_linear",
+    "OES_standard_derivatives",
+  ],
+});
 
 const camera = createCamera(document.getElementsByTagName("canvas")[0], {
   eye: [1.7, 1.5, 2.9],
@@ -104,9 +115,7 @@ async function updateMesh() {
   elements = data.elements;
 }
 
-const draw = regl({
-  frag: fragmentShader,
-  vert: vertexShader,
+const common = regl({
   attributes: {
     position: () => attributes.position,
     normal: () => attributes.normal,
@@ -135,12 +144,65 @@ const draw = regl({
   },
 });
 
+const fboA = regl.framebuffer({
+  color: [
+    regl.texture({ type: "float" }),
+    regl.texture({ type: "float" }),
+  ],
+  depth: true,
+});
+
+const fboB = regl.framebuffer({
+  color: [
+    regl.texture({
+      type: "float",
+      mag: "linear",
+      min: "linear",
+      mipmap: false,
+    }),
+  ],
+  depth: true,
+});
+
+const drawA = regl({
+  frag: fragmentShaderA,
+  vert: vertexShaderA,
+  framebuffer: fboA,
+});
+
+const drawB = regl({
+  frag: fragmentShaderB,
+  vert: vertexShaderB,
+  framebuffer: fboB,
+  uniforms: {
+    normalTex: fboA.color[0],
+    positionTex: fboA.color[1],
+  }
+});
+
+const drawC = regl({
+  frag: fragmentShaderC,
+  vert: vertexShaderC,
+  uniforms: {
+    directionTex: fboB.color[0],
+  }
+});
+
 Promise.all([initTextures(), updateMesh()]).then(() => {
-  regl.frame(() => {
-    regl.clear({ color: [1, 1, 1, 1] });
-    draw({
+  regl.frame(({ viewportWidth, viewportHeight }) => {
+    common({
       eye: camera.eye,
       center: camera.center,
+    },
+    () => {
+      fboA.resize(viewportWidth, viewportHeight);
+      fboB.resize(viewportWidth, viewportHeight);
+      regl.clear({ framebuffer: fboA, color: [0, 0, 0, 0], depth: 1000.0 });
+      regl.clear({ framebuffer: fboB, color: [0, 0, 0, 0], depth: 1000.0 });
+      regl.clear({ color: [1, 1, 1, 1] });
+      drawA();
+      drawB();
+      drawC();
     });
   });
 });

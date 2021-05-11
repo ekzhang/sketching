@@ -75,6 +75,10 @@ def compute_curvature_directions_taubin(mesh):
     matrices = np.zeros((n, 3, 3), dtype=float)
     curvature_max = np.zeros((n, 3), dtype=float)
     curvature_min = np.zeros((n, 3), dtype=float)
+    curvature_max[:,0] = 1
+    curvature_min[:,0] = 1
+    eig_max = np.zeros((n,), dtype=float)
+    eig_min = np.zeros((n,), dtype=float)
     confidence = np.zeros((n,), dtype=float)
 
     edges = [[] for i in range(n)]
@@ -97,7 +101,7 @@ def compute_curvature_directions_taubin(mesh):
         for u, tri in edges[i]:
             uv = (vertices[u] - vertices[i])[:,None]
             if areas[tri] < 1e-8:
-                print(areas[tri], np.inner(uv[:,0], uv[:,0]))
+                #print(areas[tri], np.inner(uv[:,0], uv[:,0]))
                 continue
             innuv = inn @ uv
             t = (innuv) / np.linalg.norm(innuv)
@@ -112,6 +116,8 @@ def compute_curvature_directions_taubin(mesh):
         matrices[i,:,:] /= total_area
 
         eigvals, eigvecs = eig(matrices[i])
+        eigvals = eigvals.real
+        eigvecs = eigvecs.real
         cnt = 0
         for j in range(3):
             test_normal = np.dot(eigvecs[:,j], normals[i])
@@ -120,15 +126,17 @@ def compute_curvature_directions_taubin(mesh):
                 continue
             if 2 * eigvals[j] < np.sum(eigvals):
                 curvature_min[i,:] = eigvecs[:,j]
+                eig_min[i] = 4 * eigvals[j] - np.sum(eigvals)
             else:
                 curvature_max[i,:] = eigvecs[:,j]
+                eig_max[i] = 4 * eigvals[j] - np.sum(eigvals)
         #assert cnt == 1, "Eigenvector equal to normal not found"
         if cnt != 1:
             #only occurs when matrix is all zero
             print("???", i, cnt)
-            print(matrices[i])
+            #print(matrices[i])
 
-    return curvature_min, curvature_max
+    return curvature_min, curvature_max, eig_min, eig_max, confidence
 
 def normalize(p):
     lenp = np.linalg.norm(p)
@@ -162,6 +170,8 @@ def compute_curvature_directions_rusinkiewicz(mesh):
     coordinates = np.zeros((n, 3, 3), dtype=float)
     curvature_max = np.zeros((n, 3), dtype=float)
     curvature_min = np.zeros((n, 3), dtype=float)
+    eig_max = np.zeros((n,), dtype=float)
+    eig_min = np.zeros((n,), dtype=float)
     confidence = np.zeros((n,), dtype=float)
 
     for i in range(n):
@@ -240,16 +250,16 @@ def compute_curvature_directions_rusinkiewicz(mesh):
     
     for i in range(n):
         eigvals, eigvecs = eig(matrices[i])
+        eigvals = eigvals.real
+        eigvecs = eigvecs.real
         up_proj = coordinates[i,[0,2],:].T
-        if eigvals[0] < eigvals[1]:
-            curvature_min[i,:] = up_proj @ eigvecs[:,0]
-            curvature_max[i,:] = up_proj @ eigvecs[:,1]
-        else:
-            curvature_min[i,:] = up_proj @ eigvecs[:,1]
-            curvature_max[i,:] = up_proj @ eigvecs[:,0]
-        
+        argmin = 0 if eigvals[0] < eigvals[1] else 1
+        curvature_min[i,:] = normalize(up_proj @ eigvecs[:,argmin])
+        curvature_max[i,:] = normalize(up_proj @ eigvecs[:,argmin^1])
+        eig_min[i] = eigvals[argmin]
+        eig_max[i] = eigvals[argmin^1]
 
-    return curvature_min, curvature_max
+    return curvature_min, curvature_max, eig_min, eig_max, confidence
 
 def get_lineset(vertices, vectors, color, l=0.01):
     n = vertices.shape[0]
@@ -270,9 +280,9 @@ def visualize_curvature_directions(mesh, l=0.01, show_normals=False, taubin=Fals
     normals = np.array(mesh.vertex_normals)
     n = vertices.shape[0]
     if taubin:
-        curvature_min, curvature_max = compute_curvature_directions_taubin(mesh)
+        curvature_min, curvature_max, _, _, _ = compute_curvature_directions_taubin(mesh)
     else:
-        curvature_min, curvature_max = compute_curvature_directions_rusinkiewicz(mesh)
+        curvature_min, curvature_max, _, _, _ = compute_curvature_directions_rusinkiewicz(mesh)
     
 
     line_set_max = get_lineset(vertices, curvature_max, [1, 0, 0])
@@ -309,9 +319,9 @@ def write_data(mesh, filename, taubin=False):
     triangles = np.array(mesh.triangles).tolist()
     #curvature_min, curvature_max = [[1,0,0] for i in range(len(vertices))], [[0,1,0] for i in range(len(vertices))]
     if taubin:
-        curvature_min, curvature_max = compute_curvature_directions_taubin(mesh)
+        curvature_min, curvature_max, _, _, _ = compute_curvature_directions_taubin(mesh)
     else:
-        curvature_min, curvature_max = compute_curvature_directions_rusinkiewicz(mesh)
+        curvature_min, curvature_max, _, _, _ = compute_curvature_directions_rusinkiewicz(mesh)
     curvature_min = curvature_min.tolist()
     curvature_max = curvature_max.tolist()
 
@@ -334,13 +344,22 @@ def write_data(mesh, filename, taubin=False):
     with open(filename, "w") as f:
         json.dump(pretty_floats(data), f)
 
+def compare_taubin_rusinkiewicz(mesh):
+    direction_minA, direction_maxA, eig_minA, eig_maxA, _ = compute_curvature_directions_taubin(mesh)
+    direction_minB, direction_maxB, eig_minB, eig_maxB, _ =  compute_curvature_directions_rusinkiewicz(mesh)
+    for i in range(0, eig_minA.shape[0], 100):
+        print(i, eig_minA[i], eig_maxA[i], eig_minB[i], eig_maxB[i])
+        print("taubin\t", direction_minA[i], direction_maxA[i])
+        print("rusink\t", direction_minB[i], direction_maxB[i])
+    visualize_curvature_directions(mesh, taubin=True)
+    visualize_curvature_directions(mesh, taubin=False)
+
 if __name__ == "__main__":
     # #mesh = o3d.io.read_triangle_mesh("../models/bunny/reconstruction/bun_zipper.ply")
     # #mesh = o3d.io.read_triangle_mesh("../models/csg.ply")
     # mesh = mesh_from_sdf(1, 160)
     # mesh = center_mesh(mesh)
-    # visualize_curvature_directions(mesh)
-    # #compute_curvature_directions_rusinkiewicz(mesh)
+    # compare_taubin_rusinkiewicz(mesh)
     # exit()
     parser = argparse.ArgumentParser()
     parser.add_argument(

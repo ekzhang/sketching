@@ -52,7 +52,6 @@ mat2 getLMN(vec3 v0, vec3 v1, vec3 v2, vec3 n0, vec3 n1, vec3 n2){
     ax = normalize(v1-v0);
     ay = normalize(cross(ax, v2-v0));
     az = normalize(cross(ax, ay));
-    mat3 test = transpose(mat3(1.0));
     proj = transpose(mat3(ax, ay, az));
     e0 = (proj * (v2 - v1)).xz;
     e1 = (proj * (v2 - v0)).xz;
@@ -60,33 +59,33 @@ mat2 getLMN(vec3 v0, vec3 v1, vec3 v2, vec3 n0, vec3 n1, vec3 n2){
     dn0 = (proj * (n2 - n1)).xz;
     dn1 = (proj * (n2 - n0)).xz;
     dn2 = (proj * (n1 - n0)).xz;
-    p = e0.x*e0.x+e1.x*e1.x+e1.x*e1.x;
-    q = e0.x*e0.y+e1.x*e1.y+e1.x*e1.y;
-    r = e0.y*e0.y+e1.y*e1.y+e1.y*e1.y;
+    p = e0.x*e0.x+e1.x*e1.x+e2.x*e2.x;
+    q = e0.x*e0.y+e1.x*e1.y+e2.x*e2.y;
+    r = e0.y*e0.y+e1.y*e1.y+e2.y*e2.y;
     detB = (p+r)*(p*r-q*q);
-    detB = (2.0*step(0.0, detB)-1.0) * min(abs(detB), 0.00001);
+    detB = (2.0*step(0.0, detB)-1.0) * max(abs(detB), 0.00001);
     Binv = 1.0/detB * mat3(
-        p*(r+p)-q*q, -q*r, q*q,
+        r*(r+p)-q*q, -q*r, q*q,
         -q*r, p*r, -p*q,
         q*q, -p*q, p*(r+p)-q*q
     );
     ATb = vec3(
-        e0.y * dn0.y + e1.y * dn1.y + e2.y * dn2.y,
+        e0.x * dn0.x + e1.x * dn1.x + e2.x * dn2.x,
         e0.x * dn0.y + e0.y * dn0.x + e1.x * dn1.y + e1.y * dn1.x + e2.x * dn2.y + e2.y * dn2.x,
-        e0.x * dn0.x + e1.x * dn1.x + e2.x * dn2.x
+        e0.y * dn0.y + e1.y * dn1.y + e2.y * dn2.y
     );
     LMN = Binv * ATb;
     return mat2(LMN.x, LMN.y, LMN.y, LMN.z);
 }
 
-mat2 updateLMN(vec3 v0, vec3 v1, vec3 v2, vec3 n0, vec3 n1, vec3 n2, mat2 LMNcur){
-    vec3 ax, ay, az, tax, tay, taz, rax, raz;
+mat2 updateLMN(vec3 v0, vec3 v1, vec3 v2, vec3 n0, vec3 n1, vec3 n2, vec3 tax, vec3 tay, vec3 taz, mat2 LMNcur){
+    vec3 ax, ay, az, rax, raz;
     mat2 LMN;
     mat3 rot;
     float area, L, M, N;
-    tax = normalize((v1-v0) - dot(v1-v0, n0) * n0);
-    tay = n0;
-    taz = normalize(cross(tax, tay));
+    //tax = normalize((v1-v0) - dot(v1-v0, n0) * n0);
+    //tay = n0;
+    //taz = normalize(cross(tax, tay));
 
     LMN = getLMN(v0, v1, v2, n0, n1, n2);
     area = length(cross(v1-v0, v2-v0))/2.0;
@@ -105,63 +104,62 @@ mat2 updateLMN(vec3 v0, vec3 v1, vec3 v2, vec3 n0, vec3 n1, vec3 n2, mat2 LMNcur
 vec3 getMinDirection(vec3 ax, vec3 az, mat2 LMN){
     float L = LMN[0][0], M = LMN[0][1], N = LMN[1][1];
     // Eigenvalues and eigenvectors of 2x2 matrix
-    float D = sqrt((L - N) * (L - N) + M * M);
+    float D = sqrt((L - N) * (L - N) + 4.0 * M * M);
     float lam1 = (L + N + D) / 2.0;
-    vec3 v1 = normalize(M * ax + (N - L + D) * az);
+    vec3 v1 = normalize(2.0 * M * ax + (N - L + D) * az);
     float lam2 = (L + N - D) / 2.0;
-    vec3 v2 = normalize(M * ax + (N - L - D) * az);
+    vec3 v2 = normalize(2.0 * M * ax + (N - L - D) * az);
     return abs(lam1) < abs(lam2) ? v1 : v2;
 }
 
 void main() {
-    float eps = 10.0;
+    float eps = 2.0;
     vec2 tp = gl_FragCoord.xy / resolution.xy;
-    vec2 dx = eps * vec2(1.0, 0.0) / resolution.xy;
-    vec2 dy = eps * vec2(0.0, 1.0) / resolution.xy;
+    vec2 dx = eps * vec2(1.0, 0.0) / resolution.x;
+    vec2 dy = eps * vec2(0.0, 1.0) / resolution.y;
 
-    //8---1---2
+    //2---1---8
     //| \ | / |
-    //7---0---3
+    //3---0---7
     //| / | \ |
-    //6---5---4
+    //4---5---6
 
     vec3 v0 = texture2D(positionTex, tp).xyz;
-    vec3 v1 = texture2D(positionTex, tp-dy).xyz;
-    vec3 v2 = texture2D(positionTex, tp+dx-dy).xyz;
-    vec3 v3 = texture2D(positionTex, tp+dx).xyz;
-    vec3 v4 = texture2D(positionTex, tp+dx+dy).xyz;
-    vec3 v5 = texture2D(positionTex, tp+dy).xyz;
-    vec3 v6 = texture2D(positionTex, tp-dx+dy).xyz;
-    vec3 v7 = texture2D(positionTex, tp-dx).xyz;
-    vec3 v8 = texture2D(positionTex, tp-dx-dy).xyz;
+    vec3 v1 = texture2D(positionTex, tp+dy).xyz;
+    vec3 v2 = texture2D(positionTex, tp-dx+dy).xyz;
+    vec3 v3 = texture2D(positionTex, tp-dx).xyz;
+    vec3 v4 = texture2D(positionTex, tp-dx-dy).xyz;
+    vec3 v5 = texture2D(positionTex, tp-dy).xyz;
+    vec3 v6 = texture2D(positionTex, tp+dx-dy).xyz;
+    vec3 v7 = texture2D(positionTex, tp+dx).xyz;
+    vec3 v8 = texture2D(positionTex, tp+dx+dy).xyz;
 
     vec3 n0 = texture2D(normalTex, tp).xyz;
-    vec3 n1 = texture2D(normalTex, tp-dy).xyz;
-    vec3 n2 = texture2D(normalTex, tp+dx-dy).xyz;
-    vec3 n3 = texture2D(normalTex, tp+dx).xyz;
-    vec3 n4 = texture2D(normalTex, tp+dx+dy).xyz;
-    vec3 n5 = texture2D(normalTex, tp+dy).xyz;
-    vec3 n6 = texture2D(normalTex, tp-dx+dy).xyz;
-    vec3 n7 = texture2D(normalTex, tp-dx).xyz;
-    vec3 n8 = texture2D(normalTex, tp-dx-dy).xyz;
+    vec3 n1 = texture2D(normalTex, tp+dy).xyz;
+    vec3 n2 = texture2D(normalTex, tp-dx+dy).xyz;
+    vec3 n3 = texture2D(normalTex, tp-dx).xyz;
+    vec3 n4 = texture2D(normalTex, tp-dx-dy).xyz;
+    vec3 n5 = texture2D(normalTex, tp-dy).xyz;
+    vec3 n6 = texture2D(normalTex, tp+dx-dy).xyz;
+    vec3 n7 = texture2D(normalTex, tp+dx).xyz;
+    vec3 n8 = texture2D(normalTex, tp+dx+dy).xyz;
 
     mat2 LMN = mat2(0.0);
-    LMN = updateLMN(v0, v1, v2, n0, n1, n2, LMN);
-    LMN = updateLMN(v0, v2, v3, n0, n2, n3, LMN);
-    LMN = updateLMN(v0, v3, v4, n0, n3, n4, LMN);
-    LMN = updateLMN(v0, v4, v5, n0, n4, n5, LMN);
-    LMN = updateLMN(v0, v5, v6, n0, n5, n6, LMN);
-    LMN = updateLMN(v0, v6, v7, n0, n6, n7, LMN);
-    LMN = updateLMN(v0, v7, v8, n0, n7, n8, LMN);
-    LMN = updateLMN(v0, v8, v1, n0, n8, n1, LMN);
-    
     vec3 tax, tay, taz;
-    tax = normalize((v1-v0) - dot(v1-v0, n0) * n0);
+    vec3 test = vec3(1.0, 1.0, 1.0);
+    tax = normalize(test - dot(test, n0) * n0);
     tay = n0;
     taz = normalize(cross(tax, tay));
 
+    LMN = updateLMN(v0, v1, v2, n0, n1, n2, tax, tay, taz, LMN);
+    LMN = updateLMN(v0, v2, v3, n0, n2, n3, tax, tay, taz, LMN);
+    LMN = updateLMN(v0, v3, v4, n0, n3, n4, tax, tay, taz, LMN);
+    LMN = updateLMN(v0, v4, v5, n0, n4, n5, tax, tay, taz, LMN);
+    LMN = updateLMN(v0, v5, v6, n0, n5, n6, tax, tay, taz, LMN);
+    LMN = updateLMN(v0, v6, v7, n0, n6, n7, tax, tay, taz, LMN);
+    LMN = updateLMN(v0, v7, v8, n0, n7, n8, tax, tay, taz, LMN);
+    LMN = updateLMN(v0, v8, v1, n0, n8, n1, tax, tay, taz, LMN);
+    
     vec3 direction = getMinDirection(tax, taz, LMN);
-
-    //gl_FragData[0] = vec4(normalize(vec3(LMN[0][0], LMN[1][0], LMN[1][1])), 1.0);
     gl_FragData[0] = vec4(direction, 1.0);
 }

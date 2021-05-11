@@ -60,7 +60,7 @@ void main() {
     brightnessB = isB * vec2(diffuse, 1.0);
     brightnessC = isC * vec2(diffuse, 1.0);
 
-    vec3 curvature = texture2D(directionTex, gl_Position.xy / resolution.xy).xyz;
+    vec3 curvature = texture2D(directionTex, gl_Position.xy / gl_Position.w / resolution.xy).xyz;
     // Screen-space curvature directions
     vec2 ssCurvature = screenspace(curvature);
     vCurvatureA = isA * ssCurvature;

@@ -29,8 +29,8 @@ vec2 screenspace(vec3 dir) {
 }
 
 vec4 sample(vec2 brightness, vec3 basepoint, vec2 curvature) {
-    vec2 device = (gl_FragCoord.xy - basepoint.xy / basepoint.z) / resolution.y;
-    curvature = screenspace(texture2D(directionTex, gl_FragCoord.xy/resolution.y).xyz);
+    vec2 device = (gl_FragCoord.xy - basepoint.xy / basepoint.z) / resolution.xy;
+    curvature = screenspace(texture2D(directionTex, gl_FragCoord.xy/resolution.xy).xyz);
     vec2 dir = length(curvature) > 0.0 ? normalize(curvature) : vec2(0.0, 1.0);
     vec2 uv = vec2(dot(dir, device), -dir.y * device.x + dir.x * device.y);
 
