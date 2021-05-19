@@ -88,9 +88,7 @@ def simple_check():
     )
 
     curvature_min, curvature_max, eig_min, eig_max, _ = compute_curvature_directions_taubin(mesh)
-    print(np.array(mesh.vertex_normals))
 
-
-simple_check()
-#torus_experiment(compute_curvature_directions_taubin, "taubin")
-#torus_experiment(compute_curvature_directions_rusinkiewicz, "rusinkiewicz")
+#simple_check()
+torus_experiment(compute_curvature_directions_taubin, "taubin")
+torus_experiment(compute_curvature_directions_rusinkiewicz, "rusinkiewicz")

@@ -150,10 +150,14 @@ def compute_curvature_directions_taubin(mesh):
 
     return curvature_min, curvature_max, eig_min, eig_max, confidence
 
+def rand_vec(shape):
+    p = np.random.normal(0, 1.0, shape)
+    return p / np.linalg.norm(p)
+
 def normalize(p):
     lenp = np.linalg.norm(p)
     if lenp < 1e-8:
-        return np.array([1,0,0], dtype=float)
+        return rand_vec(p.shape)
     return p / lenp
 
 def compute_voronoi_area(a, b, c):
@@ -187,10 +191,10 @@ def compute_curvature_directions_rusinkiewicz(mesh):
     confidence = np.zeros((n,), dtype=float)
 
     for i in range(n):
-        test = np.array([1, 0, 0], dtype=float)
-        if np.linalg.norm(np.cross(test, normals[i])) < 1e-2:
-            test = np.array([0, 1, 0], dtype=float)
-        coordinates[i,0,:] = test - np.dot(test, normals[i]) * normals[i]
+        test = rand_vec((3,))
+        while np.linalg.norm(np.cross(test, normals[i])) < 5e-1:
+            test = rand_vec((3,))
+        coordinates[i,0,:] = normalize(test - np.dot(test, normals[i]) * normals[i])
         coordinates[i,1,:] = normals[i]
         coordinates[i,2,:] = normalize(np.cross(coordinates[i,0,:], coordinates[i,1,:]))
 
@@ -432,15 +436,14 @@ def torus_experiment(taubin=False):
     mesh.vertex_colors = o3d.utility.Vector3dVector(old_colors)
 
 if __name__ == "__main__":
-    mesh = o3d.io.read_triangle_mesh("../models/bunny/reconstruction/bun_zipper.ply")
-    # #mesh = o3d.io.read_triangle_mesh("../models/csg.ply")
-    # mesh = mesh_from_sdf(1, 160)
-    mesh = center_mesh(mesh)
+    #mesh = o3d.io.read_triangle_mesh("../models/bunny/reconstruction/bun_zipper.ply")
+    #mesh = o3d.io.read_triangle_mesh("../models/csg.ply")
+    #mesh = mesh_from_sdf(1, 160)
+    #mesh = center_mesh(mesh)
     #mesh = o3d.geometry.TriangleMesh.create_torus(torus_radius=1.0, tube_radius=0.5, radial_resolution=90, tubular_resolution=60)
     #mesh = o3d.geometry.TriangleMesh.create_sphere(radius=1.0, resolution=20)
-
-    compare_taubin_rusinkiewicz(mesh)
-    exit()
+    #compare_taubin_rusinkiewicz(mesh)
+    #exit()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--source",
