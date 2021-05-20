@@ -11,6 +11,7 @@ const config = {
         main: resolve(__dirname, "index.html"),
         mesh: resolve(__dirname, "mesh/index.html"),
         sdf: resolve(__dirname, "sdf/index.html"),
+        realtime: resolve(__dirname, "realtime/index.html"),
       },
     },
   },
