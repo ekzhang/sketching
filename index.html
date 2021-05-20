@@ -12,9 +12,15 @@
     />
     <style>
       h1 {
-        font-size: 2.4rem;
+        font-size: 1.8rem;
         font-weight: 500;
         margin-bottom: 28px;
+      }
+
+      @media (min-width: 768px) {
+        h1 {
+          font-size: 2.4rem;
+        }
       }
 
       .icon {
@@ -137,25 +143,28 @@
         extensions.)
       </p>
       <div class="row mt-4">
-        <div class="col-12 col-sm-4">
+        <div class="col-12 col-lg-4">
           <a
-            class="btn btn-primary btn-lg btn-block mb-2 mb-sm-0"
+            class="btn btn-primary btn-lg btn-block mb-2 mb-lg-0"
             href="/mesh/"
             role="button"
             >Mesh Sketching</a
           >
         </div>
-        <div class="col-12 col-sm-4">
-          <a class="btn btn-primary btn-lg btn-block" href="/sdf/" role="button"
+        <div class="col-12 col-lg-4">
+          <a
+            class="btn btn-primary btn-lg btn-block mb-2 mb-lg-0"
+            href="/sdf/"
+            role="button"
             >SDF Sketching</a
           >
         </div>
-        <div class="col-12 col-sm-4">
+        <div class="col-12 col-lg-4">
           <a
             class="btn btn-primary btn-lg btn-block"
             href="/realtime/"
             role="button"
-            >Realtime Mesh Sketching</a
+            >Real-Time Mesh Curvature</a
           >
         </div>
       </div>

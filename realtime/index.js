@@ -22,7 +22,7 @@ import torusUrl from "../models/torus.json?url";
 import { Cloth } from "./cloth.js";
 
 const meshes = {
-  "Cloth": "Cloth",
+  Cloth: "Cloth",
   "Bunny Large": bunnyLargeUrl,
   "Bunny Small": bunnySmallUrl,
   "Utah Teapot": teapotUrl,
@@ -113,13 +113,12 @@ function generateTextures(texParams) {
 async function updateMesh() {
   if (params.mesh === "Cloth") {
     if (cloth === null) {
-        cloth = new Cloth(25, 50);
+      cloth = new Cloth(25, 50);
     }
     const data = cloth.step();
     attributes = data.attributes;
     elements = data.elements;
-  }
-  else {
+  } else {
     const resp = await fetch(params.mesh);
     const mesh = await resp.json();
     const data = loadMesh(mesh);
@@ -158,10 +157,7 @@ const common = regl({
 });
 
 const fboA = regl.framebuffer({
-  color: [
-    regl.texture({ type: "float" }),
-    regl.texture({ type: "float" }),
-  ],
+  color: [regl.texture({ type: "float" }), regl.texture({ type: "float" })],
   depth: true,
 });
 
@@ -190,7 +186,7 @@ const drawB = regl({
   uniforms: {
     normalTex: fboA.color[0],
     positionTex: fboA.color[1],
-  }
+  },
 });
 
 const drawC = regl({
@@ -198,27 +194,29 @@ const drawC = regl({
   vert: vertexShaderC,
   uniforms: {
     directionTex: fboB.color[0],
-  }
+  },
 });
 
 Promise.all([initTextures(), updateMesh()]).then(() => {
   regl.frame(({ viewportWidth, viewportHeight }) => {
-    common({
-      eye: camera.eye,
-      center: camera.center,
-    },
-    () => {
-      if (params.mesh === "Cloth") {
-        updateMesh();
+    common(
+      {
+        eye: camera.eye,
+        center: camera.center,
+      },
+      () => {
+        if (params.mesh === "Cloth") {
+          updateMesh();
+        }
+        fboA.resize(viewportWidth, viewportHeight);
+        fboB.resize(viewportWidth, viewportHeight);
+        regl.clear({ framebuffer: fboA, color: [0, 0, 0, 0], depth: 1000.0 });
+        regl.clear({ framebuffer: fboB, color: [0, 0, 0, 0], depth: 1000.0 });
+        regl.clear({ color: [1, 1, 1, 1] });
+        drawA();
+        drawB();
+        drawC();
       }
-      fboA.resize(viewportWidth, viewportHeight);
-      fboB.resize(viewportWidth, viewportHeight);
-      regl.clear({ framebuffer: fboA, color: [0, 0, 0, 0], depth: 1000.0 });
-      regl.clear({ framebuffer: fboB, color: [0, 0, 0, 0], depth: 1000.0 });
-      regl.clear({ color: [1, 1, 1, 1] });
-      drawA();
-      drawB();
-      drawC();
-    });
+    );
   });
 });
