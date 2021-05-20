@@ -51,17 +51,24 @@
         height: auto;
         border: 1px solid #dee2e6;
         transition: transform 0.5s, box-shadow 0.5s;
+        transform: scale(0.95);
       }
 
-      .thumbnail:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 8px 2px black;
-        cursor: pointer;
-        z-index: 100;
-      }
+      @media (min-width: 576px) {
+        .thumbnail {
+          transform: scale(1);
+        }
 
-      .thumbnail:active {
-        transform: scale(2);
+        .thumbnail:hover {
+          transform: scale(1.05);
+          box-shadow: 0 0 8px 2px black;
+          cursor: pointer;
+          z-index: 100;
+        }
+
+        .thumbnail:active {
+          transform: scale(2);
+        }
       }
     </style>
   </head>
@@ -92,7 +99,7 @@
         </a>
         <a
           class="link-group"
-          href="#"
+          href="https://www.overleaf.com/read/gwbdrrxbvvsk"
           target="_blank"
           rel="noopener noreferrer"
         >
