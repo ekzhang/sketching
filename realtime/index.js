@@ -19,8 +19,10 @@ import teapotUrl from "../models/clean_teapot.json?url";
 import armadilloUrl from "../models/armadillo.json?url";
 import csgUrl from "../models/clean_csg.json?url";
 import torusUrl from "../models/torus.json?url";
+import { Cloth } from "./cloth.js";
 
 const meshes = {
+  "Cloth": "Cloth",
   "Bunny Large": bunnyLargeUrl,
   "Bunny Small": bunnySmallUrl,
   "Utah Teapot": teapotUrl,
@@ -46,12 +48,13 @@ const camera = createCamera(document.getElementsByTagName("canvas")[0], {
 const [pane, params] = initPane();
 
 let numTextures, pencilTextures, attributes, elements;
+let cloth = null;
 
 function initPane() {
   const pane = new Tweakpane({ title: "Parameters" });
   const params = {
     scale: 15,
-    mesh: bunnyLargeUrl,
+    mesh: "Cloth",
     zoom: 0.8,
     height: 0.2,
     rotate: true,
@@ -108,11 +111,21 @@ function generateTextures(texParams) {
 }
 
 async function updateMesh() {
-  const resp = await fetch(params.mesh);
-  const mesh = await resp.json();
-  const data = loadMesh(mesh);
-  attributes = data.attributes;
-  elements = data.elements;
+  if (params.mesh === "Cloth") {
+    if (cloth === null) {
+        cloth = new Cloth(25, 50);
+    }
+    const data = cloth.step();
+    attributes = data.attributes;
+    elements = data.elements;
+  }
+  else {
+    const resp = await fetch(params.mesh);
+    const mesh = await resp.json();
+    const data = loadMesh(mesh);
+    attributes = data.attributes;
+    elements = data.elements;
+  }
 }
 
 const common = regl({
@@ -120,7 +133,7 @@ const common = regl({
     position: () => attributes.position,
     normal: () => attributes.normal,
     indexInTriangle: () => attributes.indexInTriangle,
-    curvature: () => attributes.curvature,
+    //curvature: () => attributes.curvature,
   },
   elements: () => elements,
   uniforms: {
@@ -195,6 +208,9 @@ Promise.all([initTextures(), updateMesh()]).then(() => {
       center: camera.center,
     },
     () => {
+      if (params.mesh === "Cloth") {
+        updateMesh();
+      }
       fboA.resize(viewportWidth, viewportHeight);
       fboB.resize(viewportWidth, viewportHeight);
       regl.clear({ framebuffer: fboA, color: [0, 0, 0, 0], depth: 1000.0 });

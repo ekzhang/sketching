@@ -113,7 +113,7 @@ vec3 getMinDirection(vec3 ax, vec3 az, mat2 LMN){
 }
 
 void main() {
-    float eps = 2.0;
+    float eps = 3.0;
     vec2 tp = gl_FragCoord.xy / resolution.xy;
     vec2 dx = eps * vec2(1.0, 0.0) / resolution.x;
     vec2 dy = eps * vec2(0.0, 1.0) / resolution.y;

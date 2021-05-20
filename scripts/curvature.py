@@ -108,10 +108,10 @@ def compute_curvature_directions_taubin(mesh):
             innuv = inn @ uv
             fail_count = 0
             while np.linalg.norm(innuv) < eps and fail_count < 10:
-                uv += np.random.normal(0, 0.001 * np.linalg.norm(uv), uv.shape)
+                uv += np.random.normal(0, 0.01 * np.linalg.norm(uv), uv.shape)
                 innuv = inn @ uv
                 fail_count += 1
-            if fail_count >= 5:
+            if fail_count >= 10:
                 continue
 
             t = innuv / np.linalg.norm(innuv)
@@ -294,7 +294,22 @@ def get_lineset(vertices, vectors, color, l=0.01):
     line_set.colors = o3d.utility.Vector3dVector(colors)
     return line_set
 
-def visualize_curvature_directions(mesh, l=0.01, show_normals=False, show_curvature=True, taubin=False):
+def get_arrows(vertices, vectors, color, l=0.01, r=0.01):
+    pass
+
+def visualize(geometries, window_name="", screenshot_path=None):
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(window_name=window_name)
+    for g in geometries:
+        vis.add_geometry(g)
+        vis.update_geometry(g)
+        vis.poll_events()
+        vis.update_renderer()
+    if screenshot_path is not None:
+        vis.capture_screen_image(screenshot_path)
+    vis.destroy_window()
+
+def visualize_curvature_directions(mesh, l=0.01, show_normals=False, show_curvature=True, taubin=False, save_path=None):
     mesh.compute_vertex_normals()
     vertices = np.array(mesh.vertices)
     normals = np.array(mesh.vertex_normals)
@@ -309,10 +324,13 @@ def visualize_curvature_directions(mesh, l=0.01, show_normals=False, show_curvat
     line_set_min = get_lineset(vertices, curvature_min, [0, 1, 0])
     line_set_normal = get_lineset(vertices, normals, [0, 0, 1])
 
+    geometries = [mesh, line_set_min, line_set_max]
     if show_normals:
-        o3d.visualization.draw_geometries([mesh, line_set_min, line_set_max, line_set_normal])
+        geometries += [line_set_normal]
+    if save_path is not None:
+        visualize(geometries, "Curvature directions", save_path)
     else:
-        o3d.visualization.draw_geometries([mesh, line_set_min, line_set_max])
+        o3d.visualization.draw_geometries(geometries)
     
     if show_curvature:
         old_colors = np.array(mesh.vertex_colors)
@@ -388,62 +406,18 @@ def compare_taubin_rusinkiewicz(mesh):
     visualize_curvature_directions(mesh, taubin=True)
     visualize_curvature_directions(mesh, taubin=False)
 
-def torus_experiment(taubin=False):
-    torus_radius = 1.0
-    tube_radius = 0.5
-    mesh = o3d.geometry.TriangleMesh.create_torus(torus_radius=torus_radius, tube_radius=tube_radius, radial_resolution=90, tubular_resolution=60)
-    mesh.compute_vertex_normals()
-    vertices = np.array(mesh.vertices)
-    normals = np.array(mesh.vertex_normals)
-    n = vertices.shape[0]
-    if taubin:
-        curvature_min, curvature_max, eig_min, eig_max, _ = compute_curvature_directions_taubin(mesh)
-    else:
-        curvature_min, curvature_max, eig_min, eig_max, _ = compute_curvature_directions_rusinkiewicz(mesh)
-    
-
-    line_set_max = get_lineset(vertices, curvature_max, [1, 0, 0])
-    line_set_min = get_lineset(vertices, curvature_min, [0, 1, 0])
-    line_set_normal = get_lineset(vertices, normals, [0, 0, 1])
-
-    o3d.visualization.draw_geometries([mesh, line_set_min, line_set_max])
-    
-    old_colors = np.array(mesh.vertex_colors)
-    paint = cm.get_cmap("seismic")
-    gaussian_curvature = eig_min * eig_max
-    print("Gaussian curvature:\t{:.4f}\t{:.4f}".format(gaussian_curvature.min(), gaussian_curvature.max()))
-    mesh.vertex_colors = o3d.utility.Vector3dVector(paint(gaussian_curvature/5 + 0.5)[:,:3])
-    o3d.visualization.draw_geometries([mesh])
-    paint = cm.get_cmap("PiYG")
-    mean_curvature = 1/2 * (eig_min + eig_max)
-    print("Mean curvature:\t\t{:.4f}\t{:.4f}".format(mean_curvature.min(), mean_curvature.max()))
-    mesh.vertex_colors = o3d.utility.Vector3dVector(paint(mean_curvature/5 + 0.5)[:,:3])
-    o3d.visualization.draw_geometries([mesh])
-
-    cosv = torus_radius - np.linalg.norm(vertices[:,:2], axis=1)
-    print(cosv.shape, "cosv")
-    true_gaussian_curvature = cosv / (tube_radius * (torus_radius + tube_radius * cosv))
-    true_mean_curvature = (torus_radius + 2 * tube_radius * cosv) / (2 * tube_radius * (torus_radius + tube_radius * cosv))
-    paint = cm.get_cmap("seismic")
-    print("True Gaussian curvature:\t{:.4f}\t{:.4f}".format(true_gaussian_curvature.min(), true_gaussian_curvature.max()))
-    mesh.vertex_colors = o3d.utility.Vector3dVector(paint(true_gaussian_curvature/5 + 0.5)[:,:3])
-    o3d.visualization.draw_geometries([mesh])
-    paint = cm.get_cmap("PiYG")
-    print("True mean curvature:\t\t{:.4f}\t{:.4f}".format(true_mean_curvature.min(), true_mean_curvature.max()))
-    mesh.vertex_colors = o3d.utility.Vector3dVector(paint(true_mean_curvature/5 + 0.5)[:,:3])
-    o3d.visualization.draw_geometries([mesh])
-    
-    mesh.vertex_colors = o3d.utility.Vector3dVector(old_colors)
-
 if __name__ == "__main__":
     #mesh = o3d.io.read_triangle_mesh("../models/bunny/reconstruction/bun_zipper.ply")
     #mesh = o3d.io.read_triangle_mesh("../models/csg.ply")
+    mesh = o3d.io.read_triangle_mesh("../models/teapot-fix.obj")
     #mesh = mesh_from_sdf(1, 160)
-    #mesh = center_mesh(mesh)
+    mesh = center_mesh(mesh)
+    visualize_curvature_directions(mesh, taubin=False)
+
     #mesh = o3d.geometry.TriangleMesh.create_torus(torus_radius=1.0, tube_radius=0.5, radial_resolution=90, tubular_resolution=60)
     #mesh = o3d.geometry.TriangleMesh.create_sphere(radius=1.0, resolution=20)
     #compare_taubin_rusinkiewicz(mesh)
-    #exit()
+    exit()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--source",
